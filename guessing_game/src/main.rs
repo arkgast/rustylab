@@ -11,7 +11,8 @@ fn main() {
 
     let secret_number: u8 = random_range(0..=100);
 
-    println!("Secret numbert is: {}", secret_number);
+    #[cfg(debug_assertions)]
+    eprintln!("Secret numbert is: {}", secret_number);
 
     while lives_used < MAX_LIVES {
         let mut guess = String::new();
@@ -31,7 +32,7 @@ fn main() {
             }
             Ordering::Equal => {
                 println!("You've guessed the secret number");
-                break;
+                return;
             }
             Ordering::Greater => {
                 println!("Your guess number is higher than the expected number");
@@ -45,12 +46,12 @@ fn main() {
     println!("You've lost");
 }
 
-fn print_lives(attempts: u8) {
+fn print_lives(lives_used: u8) {
     println!(
         "Available lives: {}{}",
-        LIFE_LOST.to_string().repeat(attempts as usize),
+        LIFE_LOST.to_string().repeat(lives_used as usize),
         LIFE_EMPTY
             .to_string()
-            .repeat((MAX_LIVES - attempts) as usize)
+            .repeat((MAX_LIVES - lives_used) as usize)
     );
 }
