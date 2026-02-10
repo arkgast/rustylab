@@ -2,13 +2,21 @@ use rand::random_range;
 use std::cmp::Ordering;
 use std::io;
 
+const MAX_LIVES: u8 = 5;
+const LIFE_EMPTY: char = '□';
+const LIFE_LOST: char = '✘';
+
 fn main() {
+    let mut lives_used: u8 = 0;
+
     let secret_number: u8 = random_range(0..=100);
 
     println!("Secret numbert is: {}", secret_number);
 
     loop {
         let mut guess = String::new();
+
+        print_lives(lives_used);
 
         println!("Insert your guess number: ");
         io::stdin()
@@ -29,5 +37,23 @@ fn main() {
                 println!("Your guess number is higher than the expected number");
             }
         }
+
+        lives_used += 1;
+
+        if lives_used == MAX_LIVES {
+            print_lives(lives_used);
+            println!("You've lost");
+            break;
+        }
     }
+}
+
+fn print_lives(attempts: u8) {
+    println!(
+        "Available lives: {}{}",
+        LIFE_LOST.to_string().repeat(attempts as usize),
+        LIFE_EMPTY
+            .to_string()
+            .repeat((MAX_LIVES - attempts) as usize)
+    );
 }
