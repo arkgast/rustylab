@@ -13,7 +13,7 @@ fn main() {
 
     println!("Secret numbert is: {}", secret_number);
 
-    loop {
+    while lives_used < MAX_LIVES {
         let mut guess = String::new();
 
         print_lives(lives_used);
@@ -39,13 +39,10 @@ fn main() {
         }
 
         lives_used += 1;
-
-        if lives_used == MAX_LIVES {
-            print_lives(lives_used);
-            println!("You've lost");
-            break;
-        }
     }
+
+    print_lives(lives_used);
+    println!("You've lost");
 }
 
 fn print_lives(attempts: u8) {
