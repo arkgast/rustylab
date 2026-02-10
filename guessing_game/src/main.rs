@@ -1,7 +1,10 @@
 use rand::random_range;
 use std::cmp::Ordering;
-use std::io;
+use std::io::{self};
 use std::iter::repeat_n;
+
+const MAX_GUESSING_NUMBER: u8 = 100;
+const MIN_GUESSING_NUMBER: u8 = 0;
 
 const MAX_LIVES: u8 = 5;
 const LIFE_EMPTY: char = '□';
@@ -25,7 +28,21 @@ fn main() {
             .read_line(&mut guess)
             .expect("Failed to read line");
 
-        let guess: u8 = guess.trim().parse().expect("Failed to parse guess number");
+        lives_used += 1;
+
+        let guess: u8 = match guess.trim().parse() {
+            Ok(guess) => {
+                if !(MIN_GUESSING_NUMBER..=MAX_GUESSING_NUMBER).contains(&guess) {
+                    println!("Guess number should be in the range of 0 and 100");
+                    continue;
+                }
+                guess
+            }
+            Err(_) => {
+                println!("Please enter a valid number");
+                continue;
+            }
+        };
 
         match guess.cmp(&secret_number) {
             Ordering::Less => {
@@ -39,8 +56,6 @@ fn main() {
                 println!("Your guess number is higher than the expected number");
             }
         }
-
-        lives_used += 1;
     }
 
     print_lives(lives_used);
