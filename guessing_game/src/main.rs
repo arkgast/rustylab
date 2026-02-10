@@ -1,6 +1,7 @@
 use rand::random_range;
 use std::cmp::Ordering;
 use std::io;
+use std::iter::repeat_n;
 
 const MAX_LIVES: u8 = 5;
 const LIFE_EMPTY: char = '□';
@@ -47,11 +48,11 @@ fn main() {
 }
 
 fn print_lives(lives_used: u8) {
-    println!(
-        "Available lives: {}{}",
-        LIFE_LOST.to_string().repeat(lives_used as usize),
-        LIFE_EMPTY
-            .to_string()
-            .repeat((MAX_LIVES - lives_used) as usize)
-    );
+    let remaining = MAX_LIVES - lives_used;
+
+    let lives: String = repeat_n(LIFE_LOST, lives_used as usize)
+        .chain(repeat_n(LIFE_EMPTY, remaining as usize))
+        .collect();
+
+    println!("Available lives: {}", lives);
 }
