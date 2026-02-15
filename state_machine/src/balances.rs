@@ -20,6 +20,10 @@ impl Pallet {
     }
 
     pub fn transfer(&mut self, from: &str, to: &str, amount: u128) -> Result<(), &'static str> {
+        if from == to {
+            return Err("Cannot transfer to self");
+        }
+
         let from_current_balance = self.balance(from);
         let to_current_balance = self.balance(to);
 
@@ -96,5 +100,13 @@ mod tests {
 
         let transfer_result = pallet.transfer("alice", "bob", 50);
         assert_eq!(transfer_result, Err("Balance overflow"));
+    }
+
+    #[test]
+    fn transfer_to_self_returns_error() {
+        let mut pallet = Pallet::new();
+
+        let transfer_result = pallet.transfer("alice", "alice", 100);
+        assert_eq!(transfer_result, Err("Cannot transfer to self"));
     }
 }
