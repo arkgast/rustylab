@@ -1,5 +1,12 @@
 use std::collections::BTreeMap;
 
+#[derive(Debug, PartialEq)]
+pub enum TransferError {
+    NotEnoughBalance,
+    BalanceOverflow,
+    CannotTransferToSelf,
+}
+
 pub struct Pallet {
     balances: BTreeMap<String, u128>,
 }
@@ -19,9 +26,9 @@ impl Pallet {
         *self.balances.get(who).unwrap_or(&0)
     }
 
-    pub fn transfer(&mut self, from: &str, to: &str, amount: u128) -> Result<(), &'static str> {
+    pub fn transfer(&mut self, from: &str, to: &str, amount: u128) -> Result<(), TransferError> {
         if from == to {
-            return Err("Cannot transfer to self");
+            return Err(TransferError::CannotTransferToSelf);
         }
 
         let from_current_balance = self.balance(from);
@@ -29,10 +36,10 @@ impl Pallet {
 
         let from_new_balance = from_current_balance
             .checked_sub(amount)
-            .ok_or("Not enough balance")?;
+            .ok_or(TransferError::NotEnoughBalance)?;
         let to_new_balance = to_current_balance
             .checked_add(amount)
-            .ok_or("Balance overflow")?;
+            .ok_or(TransferError::BalanceOverflow)?;
 
         self.set_balance(from, from_new_balance);
         self.set_balance(to, to_new_balance);
@@ -88,7 +95,7 @@ mod tests {
 
         pallet.set_balance("alice", 10);
         let transfer_result = pallet.transfer("alice", "bob", 100);
-        assert_eq!(transfer_result, Err("Not enough balance"));
+        assert_eq!(transfer_result, Err(TransferError::NotEnoughBalance));
     }
 
     #[test]
@@ -99,7 +106,7 @@ mod tests {
         pallet.set_balance("bob", u128::MAX);
 
         let transfer_result = pallet.transfer("alice", "bob", 50);
-        assert_eq!(transfer_result, Err("Balance overflow"));
+        assert_eq!(transfer_result, Err(TransferError::BalanceOverflow));
     }
 
     #[test]
@@ -107,6 +114,6 @@ mod tests {
         let mut pallet = Pallet::new();
 
         let transfer_result = pallet.transfer("alice", "alice", 100);
-        assert_eq!(transfer_result, Err("Cannot transfer to self"));
+        assert_eq!(transfer_result, Err(TransferError::CannotTransferToSelf));
     }
 }
