@@ -52,6 +52,26 @@ impl Pallet {
 mod tests {
     use super::*;
 
+    struct TransferCase<'a> {
+        from: &'a str,
+        to: &'a str,
+        amount: u128,
+        expected_error: TransferError,
+    }
+
+    fn assert_failed_transfer_is_atomic(pallet: &mut Pallet, case: TransferCase<'_>) {
+        let from_before = pallet.balance(case.from);
+        let to_before = pallet.balance(case.to);
+
+        let err = pallet
+            .transfer(case.from, case.to, case.amount)
+            .unwrap_err();
+        assert_eq!(err, case.expected_error);
+
+        assert_eq!(pallet.balance(case.from), from_before);
+        assert_eq!(pallet.balance(case.to), to_before);
+    }
+
     #[test]
     fn unknown_account_is_zero() {
         let mut pallet = Pallet::new();
@@ -94,8 +114,16 @@ mod tests {
         let mut pallet = Pallet::new();
 
         pallet.set_balance("alice", 10);
-        let transfer_result = pallet.transfer("alice", "bob", 100);
-        assert_eq!(transfer_result, Err(TransferError::NotEnoughBalance));
+
+        assert_failed_transfer_is_atomic(
+            &mut pallet,
+            TransferCase {
+                from: "alice",
+                to: "bob",
+                amount: 100,
+                expected_error: TransferError::NotEnoughBalance,
+            },
+        );
     }
 
     #[test]
@@ -105,15 +133,29 @@ mod tests {
         pallet.set_balance("alice", 100);
         pallet.set_balance("bob", u128::MAX);
 
-        let transfer_result = pallet.transfer("alice", "bob", 50);
-        assert_eq!(transfer_result, Err(TransferError::BalanceOverflow));
+        assert_failed_transfer_is_atomic(
+            &mut pallet,
+            TransferCase {
+                from: "alice",
+                to: "bob",
+                amount: 50,
+                expected_error: TransferError::BalanceOverflow,
+            },
+        );
     }
 
     #[test]
     fn transfer_to_self_returns_error() {
         let mut pallet = Pallet::new();
 
-        let transfer_result = pallet.transfer("alice", "alice", 100);
-        assert_eq!(transfer_result, Err(TransferError::CannotTransferToSelf));
+        assert_failed_transfer_is_atomic(
+            &mut pallet,
+            TransferCase {
+                from: "alice",
+                to: "alice",
+                amount: 100,
+                expected_error: TransferError::CannotTransferToSelf,
+            },
+        );
     }
 }
