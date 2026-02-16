@@ -1,3 +1,4 @@
+use crate::types::{AccountId, Balance};
 use std::collections::BTreeMap;
 
 #[derive(Debug, PartialEq)]
@@ -8,26 +9,31 @@ pub enum TransferError {
 }
 
 #[derive(Debug)]
-pub struct Pallet {
-    balances: BTreeMap<String, u128>,
+pub struct Pallet<'a> {
+    balances: BTreeMap<AccountId<'a>, Balance>,
 }
 
-impl Pallet {
+impl<'a> Pallet<'a> {
     pub fn new() -> Self {
         Self {
             balances: BTreeMap::new(),
         }
     }
 
-    pub fn set_balance(&mut self, who: &str, amount: u128) {
-        self.balances.insert(who.to_string(), amount);
+    pub fn set_balance(&mut self, who: AccountId<'a>, amount: Balance) {
+        self.balances.insert(who, amount);
     }
 
-    pub fn balance(&self, who: &str) -> u128 {
+    pub fn balance(&self, who: AccountId<'a>) -> Balance {
         *self.balances.get(who).unwrap_or(&0)
     }
 
-    pub fn transfer(&mut self, from: &str, to: &str, amount: u128) -> Result<(), TransferError> {
+    pub fn transfer(
+        &mut self,
+        from: AccountId<'a>,
+        to: AccountId<'a>,
+        amount: Balance,
+    ) -> Result<(), TransferError> {
         if from == to {
             return Err(TransferError::CannotTransferToSelf);
         }
@@ -54,13 +60,13 @@ mod tests {
     use super::*;
 
     struct TransferCase<'a> {
-        from: &'a str,
-        to: &'a str,
-        amount: u128,
+        from: AccountId<'a>,
+        to: AccountId<'a>,
+        amount: Balance,
         expected_error: TransferError,
     }
 
-    fn assert_failed_transfer_is_atomic(pallet: &mut Pallet, case: TransferCase<'_>) {
+    fn assert_failed_transfer_is_atomic<'a>(pallet: &mut Pallet<'a>, case: TransferCase<'a>) {
         let from_before = pallet.balance(case.from);
         let to_before = pallet.balance(case.to);
 

@@ -1,16 +1,18 @@
 mod balances;
 mod system;
+mod types;
 
 #[derive(Debug)]
-pub struct Runtime {
-    system: system::Pallet,
-    balances: balances::Pallet,
+pub struct Runtime<'a> {
+    system: system::Pallet<'a>,
+    balances: balances::Pallet<'a>,
 }
 
-impl Runtime {
+#[allow(clippy::new_without_default)]
+impl<'a> Runtime<'a> {
     pub fn new() -> Self {
         Self {
-            system: system::Pallet::new(),
+            system: system::Pallet::<'a>::new(),
             balances: balances::Pallet::new(),
         }
     }
@@ -26,10 +28,11 @@ fn main() {
 
     // first transaction
     runtime.system.inc_nonce("alice");
+    assert_eq!(runtime.system.nonce("alice"), 1);
     let transfer_result = runtime
         .balances
         .transfer("alice", "bob", 30)
-        .map_err(|e| eprintln!("1st tx error: {:?}", e));
+        .inspect_err(|e| eprintln!("1st tx error: {:?}", e));
     println!("1st tx: {:?}", transfer_result);
 
     // second transaction
@@ -37,7 +40,7 @@ fn main() {
     let transfer_result = runtime
         .balances
         .transfer("alice", "bob", 80)
-        .map_err(|e| eprintln!("2nd tx error: {:?}", e));
+        .inspect_err(|e| eprintln!("2nd tx error: {:?}", e));
     println!("2nd tx: {:?}", transfer_result);
 
     println!("Runtime state: {:#?}", runtime);

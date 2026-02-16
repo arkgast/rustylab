@@ -1,12 +1,13 @@
+use crate::types::{AccountId, BlockNumber, Nonce};
 use std::collections::BTreeMap;
 
 #[derive(Debug)]
-pub struct Pallet {
-    block_number: u32,
-    nonce: BTreeMap<String, u32>,
+pub struct Pallet<'a> {
+    block_number: BlockNumber,
+    nonce: BTreeMap<AccountId<'a>, Nonce>,
 }
 
-impl Pallet {
+impl<'a> Pallet<'a> {
     pub fn new() -> Self {
         Self {
             block_number: 0,
@@ -14,7 +15,7 @@ impl Pallet {
         }
     }
 
-    pub fn block_number(&self) -> u32 {
+    pub fn block_number(&self) -> BlockNumber {
         self.block_number
     }
 
@@ -22,13 +23,13 @@ impl Pallet {
         self.block_number += 1;
     }
 
-    pub fn nonce(&self, who: &str) -> u32 {
+    pub fn nonce(&self, who: AccountId<'a>) -> Nonce {
         *self.nonce.get(who).unwrap_or(&0)
     }
 
-    pub fn inc_nonce(&mut self, who: &str) {
+    pub fn inc_nonce(&mut self, who: AccountId<'a>) {
         let nonce = self.nonce.get(who).unwrap_or(&0);
-        self.nonce.insert(who.to_string(), nonce + 1);
+        self.nonce.insert(who, nonce + 1);
     }
 }
 
