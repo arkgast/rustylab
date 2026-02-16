@@ -1,7 +1,7 @@
 use crate::types::{AccountId, Balance};
 use std::collections::BTreeMap;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TransferError {
     NotEnoughBalance,
     BalanceOverflow,

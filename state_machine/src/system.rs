@@ -28,7 +28,7 @@ impl<'a> Pallet<'a> {
     }
 
     pub fn inc_nonce(&mut self, who: AccountId<'a>) {
-        let nonce = self.nonce.get(who).unwrap_or(&0);
+        let nonce = self.nonce(who);
         self.nonce.insert(who, nonce + 1);
     }
 }
