@@ -7,6 +7,7 @@ pub enum TransferError {
     CannotTransferToSelf,
 }
 
+#[derive(Debug)]
 pub struct Pallet {
     balances: BTreeMap<String, u128>,
 }

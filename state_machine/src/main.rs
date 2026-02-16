@@ -1,6 +1,7 @@
 mod balances;
 mod system;
 
+#[derive(Debug)]
 pub struct Runtime {
     system: system::Pallet,
     balances: balances::Pallet,
@@ -38,4 +39,6 @@ fn main() {
         .transfer("alice", "bob", 80)
         .map_err(|e| eprintln!("2nd tx error: {:?}", e));
     println!("2nd tx: {:?}", transfer_result);
+
+    println!("Runtime state: {:#?}", runtime);
 }
