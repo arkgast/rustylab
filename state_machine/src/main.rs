@@ -5,14 +5,14 @@ mod types;
 #[derive(Debug)]
 pub struct Runtime<'a> {
     system: system::Pallet<'a>,
-    balances: balances::Pallet<'a>,
+    balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
 #[allow(clippy::new_without_default)]
 impl<'a> Runtime<'a> {
     pub fn new() -> Self {
         Self {
-            system: system::Pallet::<'a>::new(),
+            system: system::Pallet::new(),
             balances: balances::Pallet::new(),
         }
     }
@@ -20,7 +20,7 @@ impl<'a> Runtime<'a> {
 
 fn main() {
     let mut runtime = Runtime::new();
-    runtime.balances.set_balance("alice", 100);
+    runtime.balances.set_balance("alice".to_string(), 100);
 
     // simulate block
     runtime.system.inc_block_number();
@@ -31,7 +31,7 @@ fn main() {
     assert_eq!(runtime.system.nonce("alice"), 1);
     let transfer_result = runtime
         .balances
-        .transfer("alice", "bob", 30)
+        .transfer("alice".to_string(), "bob".to_string(), 30)
         .inspect_err(|e| eprintln!("1st tx error: {:?}", e));
     println!("1st tx: {:?}", transfer_result);
 
@@ -39,7 +39,7 @@ fn main() {
     runtime.system.inc_nonce("alice");
     let transfer_result = runtime
         .balances
-        .transfer("alice", "bob", 80)
+        .transfer("alice".to_string(), "bob".to_string(), 80)
         .inspect_err(|e| eprintln!("2nd tx error: {:?}", e));
     println!("2nd tx: {:?}", transfer_result);
 

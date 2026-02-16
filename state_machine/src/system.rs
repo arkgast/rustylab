@@ -1,5 +1,7 @@
-use crate::types::{AccountId, BlockNumber, Nonce};
+use crate::types::{BlockNumber, Nonce};
 use std::collections::BTreeMap;
+
+type AccountId<'a> = &'a str;
 
 #[derive(Debug)]
 pub struct Pallet<'a> {
