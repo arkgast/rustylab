@@ -3,13 +3,13 @@ mod system;
 mod types;
 
 #[derive(Debug)]
-pub struct Runtime<'a> {
-    system: system::Pallet<'a>,
+pub struct Runtime {
+    system: system::Pallet<types::AccountId, types::BlockNumber, types::Nonce>,
     balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
 #[allow(clippy::new_without_default)]
-impl<'a> Runtime<'a> {
+impl Runtime {
     pub fn new() -> Self {
         Self {
             system: system::Pallet::new(),
@@ -27,8 +27,8 @@ fn main() {
     assert_eq!(runtime.system.block_number(), 1);
 
     // first transaction
-    runtime.system.inc_nonce("alice");
-    assert_eq!(runtime.system.nonce("alice"), 1);
+    runtime.system.inc_nonce(&"alice".to_string());
+    assert_eq!(runtime.system.nonce(&"alice".to_string()), 1);
     let transfer_result = runtime
         .balances
         .transfer("alice".to_string(), "bob".to_string(), 30)
@@ -36,7 +36,7 @@ fn main() {
     println!("1st tx: {:?}", transfer_result);
 
     // second transaction
-    runtime.system.inc_nonce("alice");
+    runtime.system.inc_nonce(&"alice".to_string());
     let transfer_result = runtime
         .balances
         .transfer("alice".to_string(), "bob".to_string(), 80)
