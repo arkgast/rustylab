@@ -39,29 +39,70 @@ where
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//
-//     #[test]
-//     fn new_pallet_starts_at_block_zero() {
-//         let pallet = Pallet::new();
-//         assert_eq!(pallet.block_number(), 0);
-//     }
-//
-//     #[test]
-//     fn inc_block_number_increments_by_one() {
-//         let mut pallet = Pallet::new();
-//         pallet.inc_block_number();
-//         assert_eq!(pallet.block_number(), 1);
-//         pallet.inc_block_number();
-//         assert_eq!(pallet.block_number(), 2);
-//     }
-//
-//     #[test]
-//     fn inc_nonce_initializes_missing_account_to_one() {
-//         let mut pallet = Pallet::new();
-//         pallet.inc_nonce("alice");
-//         assert_eq!(pallet.nonce("alice"), 1);
-//     }
-// }
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::types::*;
+
+    type TestPallet = Pallet<AccountId, BlockNumber, Nonce>;
+
+    #[test]
+    fn new_pallet_starts_at_block_zero() {
+        let pallet = TestPallet::new();
+        assert_eq!(pallet.block_number(), 0);
+    }
+
+    #[test]
+    fn inc_block_number_increments_by_one() {
+        let mut pallet = TestPallet::new();
+        pallet.inc_block_number();
+        assert_eq!(pallet.block_number(), 1);
+        pallet.inc_block_number();
+        assert_eq!(pallet.block_number(), 2);
+    }
+
+    #[test]
+    fn inc_nonce_initializes_missing_account_to_one() {
+        let mut pallet = TestPallet::new();
+        pallet.inc_nonce(&"alice".to_string());
+        assert_eq!(pallet.nonce(&"alice".to_string()), 1);
+    }
+
+    #[test]
+    fn inc_nonce_increments_existing_account() {
+        let mut pallet = TestPallet::new();
+        let alice = "alice".to_string();
+        pallet.inc_nonce(&alice);
+        pallet.inc_nonce(&alice);
+        pallet.inc_nonce(&alice);
+        assert_eq!(pallet.nonce(&"alice".to_string()), 3);
+    }
+
+    #[test]
+    fn inc_nonce_does_not_change_block_number() {
+        let mut pallet = TestPallet::new();
+        let alice = "alice".to_string();
+        let block_number = pallet.block_number();
+        pallet.inc_nonce(&alice);
+        pallet.inc_nonce(&alice);
+        assert_eq!(pallet.block_number(), block_number);
+    }
+
+    #[test]
+    fn inc_block_number_does_not_change_nonce() {
+        let mut pallet = TestPallet::new();
+        let alice = "alice".to_string();
+        let nonce = pallet.nonce(&alice);
+
+        pallet.inc_block_number();
+        pallet.inc_block_number();
+
+        assert_eq!(pallet.nonce(&alice), nonce);
+    }
+
+    #[test]
+    fn inc_nonce_returns_error_on_overflow() {}
+
+    #[test]
+    fn inc_block_number_returns_error_on_overflow() {}
+}
