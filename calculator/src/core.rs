@@ -18,7 +18,6 @@ trait IntScalar:
 {
 }
 
-#[derive(Debug, Copy, Clone)]
 pub struct Calculator<T> {
     a: T,
     b: T,
@@ -102,6 +101,9 @@ where
     T: fmt::Display + IntScalar,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Calculator:")?;
+        writeln!(f, "\ta:{} b:{}", self.a, self.b)?;
+        writeln!(f, "Operations:")?;
         writeln!(f, "\tAddition: {}", self.add())?;
         writeln!(f, "\tSubtraction: {}", self.subtract())?;
 

@@ -6,6 +6,5 @@ fn main() {
 
     let calculator = Calculator::new(a, b);
 
-    println!("{:?}", calculator);
-    println!("Operations: \n{}", calculator);
+    println!("{}", calculator);
 }
