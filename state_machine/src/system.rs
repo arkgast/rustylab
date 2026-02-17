@@ -41,7 +41,7 @@ where
     }
 
     pub fn nonce(&self, who: &AccountId) -> Nonce {
-        *self.nonce.get(who).unwrap_or(&Nonce::zero())
+        self.nonce.get(who).copied().unwrap_or_else(Nonce::zero)
     }
 
     pub fn inc_nonce(&mut self, who: &AccountId) -> Result<(), SystemError> {
@@ -60,6 +60,19 @@ mod test {
     use crate::types::*;
 
     type TestPallet = Pallet<AccountId, BlockNumber, Nonce>;
+
+    impl<AccountId, BlockNumber, Nonce> Pallet<AccountId, BlockNumber, Nonce>
+    where
+        AccountId: Clone + Ord,
+    {
+        fn set_nonce(&mut self, who: &AccountId, nonce: Nonce) {
+            self.nonce.insert(who.clone(), nonce);
+        }
+
+        fn set_block_number(&mut self, block_number: BlockNumber) {
+            self.block_number = block_number;
+        }
+    }
 
     #[test]
     fn new_pallet_starts_at_block_zero() {
@@ -120,7 +133,7 @@ mod test {
     fn inc_nonce_returns_error_on_overflow() {
         let mut pallet = TestPallet::new();
         let alice = "alice".to_string();
-        pallet.nonce.insert(alice.clone(), u32::MAX);
+        pallet.set_nonce(&alice, u32::MAX);
 
         let err = pallet.inc_nonce(&alice).unwrap_err();
         assert_eq!(err, SystemError::NonceOverflow);
@@ -131,7 +144,7 @@ mod test {
     #[test]
     fn inc_block_number_returns_error_on_overflow() {
         let mut pallet = TestPallet::new();
-        pallet.block_number = u32::MAX;
+        pallet.set_block_number(u32::MAX);
 
         let err = pallet.inc_block_number().unwrap_err();
         assert_eq!(err, SystemError::BlockNumberOverflow);
