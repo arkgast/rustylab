@@ -23,11 +23,11 @@ fn main() {
     runtime.balances.set_balance("alice".to_string(), 100);
 
     // simulate block
-    runtime.system.inc_block_number();
+    runtime.system.inc_block_number().unwrap();
     assert_eq!(runtime.system.block_number(), 1);
 
     // first transaction
-    runtime.system.inc_nonce(&"alice".to_string());
+    runtime.system.inc_nonce(&"alice".to_string()).unwrap();
     assert_eq!(runtime.system.nonce(&"alice".to_string()), 1);
     let transfer_result = runtime
         .balances
@@ -36,7 +36,7 @@ fn main() {
     println!("1st tx: {:?}", transfer_result);
 
     // second transaction
-    runtime.system.inc_nonce(&"alice".to_string());
+    runtime.system.inc_nonce(&"alice".to_string()).unwrap();
     let transfer_result = runtime
         .balances
         .transfer("alice".to_string(), "bob".to_string(), 80)

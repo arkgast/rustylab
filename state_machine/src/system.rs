@@ -1,6 +1,12 @@
-use std::{collections::BTreeMap, ops::AddAssign};
+use std::collections::BTreeMap;
 
-use num::{One, Zero};
+use num::{CheckedAdd, One, Zero};
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum SystemError {
+    BlockNumberOverflow,
+    NonceOverflow,
+}
 
 #[derive(Debug)]
 pub struct Pallet<AccountId, BlockNumber, Nonce> {
@@ -11,8 +17,8 @@ pub struct Pallet<AccountId, BlockNumber, Nonce> {
 impl<AccountId, BlockNumber, Nonce> Pallet<AccountId, BlockNumber, Nonce>
 where
     AccountId: Ord + Clone,
-    BlockNumber: Copy + AddAssign + One + Zero,
-    Nonce: Copy + One + Zero,
+    BlockNumber: CheckedAdd + Copy + One + Zero,
+    Nonce: CheckedAdd + Copy + One + Zero,
 {
     pub fn new() -> Self {
         Self {
@@ -25,17 +31,26 @@ where
         self.block_number
     }
 
-    pub fn inc_block_number(&mut self) {
-        self.block_number += BlockNumber::one();
+    pub fn inc_block_number(&mut self) -> Result<(), SystemError> {
+        self.block_number = self
+            .block_number
+            .checked_add(&BlockNumber::one())
+            .ok_or(SystemError::BlockNumberOverflow)?;
+
+        Ok(())
     }
 
     pub fn nonce(&self, who: &AccountId) -> Nonce {
         *self.nonce.get(who).unwrap_or(&Nonce::zero())
     }
 
-    pub fn inc_nonce(&mut self, who: &AccountId) {
+    pub fn inc_nonce(&mut self, who: &AccountId) -> Result<(), SystemError> {
         let nonce = self.nonce(who);
-        self.nonce.insert(who.clone(), nonce + Nonce::one());
+        let new_nonce = nonce
+            .checked_add(&Nonce::one())
+            .ok_or(SystemError::NonceOverflow)?;
+        self.nonce.insert(who.clone(), new_nonce);
+        Ok(())
     }
 }
 
@@ -55,27 +70,28 @@ mod test {
     #[test]
     fn inc_block_number_increments_by_one() {
         let mut pallet = TestPallet::new();
-        pallet.inc_block_number();
+        pallet.inc_block_number().unwrap();
         assert_eq!(pallet.block_number(), 1);
-        pallet.inc_block_number();
+        pallet.inc_block_number().unwrap();
         assert_eq!(pallet.block_number(), 2);
     }
 
     #[test]
     fn inc_nonce_initializes_missing_account_to_one() {
         let mut pallet = TestPallet::new();
-        pallet.inc_nonce(&"alice".to_string());
-        assert_eq!(pallet.nonce(&"alice".to_string()), 1);
+        let alice = "alice".to_string();
+        pallet.inc_nonce(&alice).unwrap();
+        assert_eq!(pallet.nonce(&alice), 1);
     }
 
     #[test]
     fn inc_nonce_increments_existing_account() {
         let mut pallet = TestPallet::new();
         let alice = "alice".to_string();
-        pallet.inc_nonce(&alice);
-        pallet.inc_nonce(&alice);
-        pallet.inc_nonce(&alice);
-        assert_eq!(pallet.nonce(&"alice".to_string()), 3);
+        pallet.inc_nonce(&alice).unwrap();
+        pallet.inc_nonce(&alice).unwrap();
+        pallet.inc_nonce(&alice).unwrap();
+        assert_eq!(pallet.nonce(&alice), 3);
     }
 
     #[test]
@@ -83,8 +99,8 @@ mod test {
         let mut pallet = TestPallet::new();
         let alice = "alice".to_string();
         let block_number = pallet.block_number();
-        pallet.inc_nonce(&alice);
-        pallet.inc_nonce(&alice);
+        pallet.inc_nonce(&alice).unwrap();
+        pallet.inc_nonce(&alice).unwrap();
         assert_eq!(pallet.block_number(), block_number);
     }
 
@@ -94,15 +110,32 @@ mod test {
         let alice = "alice".to_string();
         let nonce = pallet.nonce(&alice);
 
-        pallet.inc_block_number();
-        pallet.inc_block_number();
+        pallet.inc_block_number().unwrap();
+        pallet.inc_block_number().unwrap();
 
         assert_eq!(pallet.nonce(&alice), nonce);
     }
 
     #[test]
-    fn inc_nonce_returns_error_on_overflow() {}
+    fn inc_nonce_returns_error_on_overflow() {
+        let mut pallet = TestPallet::new();
+        let alice = "alice".to_string();
+        pallet.nonce.insert(alice.clone(), u32::MAX);
+
+        let err = pallet.inc_nonce(&alice).unwrap_err();
+        assert_eq!(err, SystemError::NonceOverflow);
+
+        assert_eq!(pallet.nonce(&alice), u32::MAX);
+    }
 
     #[test]
-    fn inc_block_number_returns_error_on_overflow() {}
+    fn inc_block_number_returns_error_on_overflow() {
+        let mut pallet = TestPallet::new();
+        pallet.block_number = u32::MAX;
+
+        let err = pallet.inc_block_number().unwrap_err();
+        assert_eq!(err, SystemError::BlockNumberOverflow);
+
+        assert_eq!(pallet.block_number(), u32::MAX);
+    }
 }
