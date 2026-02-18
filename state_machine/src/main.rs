@@ -4,8 +4,14 @@ mod types;
 
 #[derive(Debug)]
 pub struct Runtime {
-    system: system::Pallet<types::AccountId, types::BlockNumber, types::Nonce>,
+    system: system::Pallet<Self>,
     balances: balances::Pallet<types::AccountId, types::Balance>,
+}
+
+impl system::Config for Runtime {
+    type AccountId = String;
+    type BlockNumber = u32;
+    type Nonce = u32;
 }
 
 #[allow(clippy::new_without_default)]
