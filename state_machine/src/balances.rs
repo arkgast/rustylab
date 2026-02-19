@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 
 use num::{CheckedAdd, CheckedSub, Zero};
 
-pub trait Config {
-    type AccountId: Clone + Eq + Ord;
+use crate::system;
+
+pub trait Config: system::Config {
     type Balance: CheckedAdd + CheckedSub + Copy + Eq + Zero;
 }
 
@@ -71,25 +72,31 @@ impl<T: Config> Pallet<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::types;
-
     use super::*;
 
-    struct TransferCase {
-        from: types::AccountId,
-        to: types::AccountId,
-        amount: types::Balance,
+    struct TransferCase<T: super::Config> {
+        from: T::AccountId,
+        to: T::AccountId,
+        amount: T::Balance,
         expected_error: TransferError,
     }
 
     struct TestPallet;
 
     impl super::Config for TestPallet {
-        type AccountId = String;
         type Balance = u128;
     }
 
-    fn assert_failed_transfer_is_atomic(pallet: &mut Pallet<TestPallet>, case: TransferCase) {
+    impl system::Config for TestPallet {
+        type AccountId = String;
+        type BlockNumber = u32;
+        type Nonce = u32;
+    }
+
+    fn assert_failed_transfer_is_atomic(
+        pallet: &mut Pallet<TestPallet>,
+        case: TransferCase<TestPallet>,
+    ) {
         let from_before = pallet.balance(&case.from);
         let to_before = pallet.balance(&case.to);
 

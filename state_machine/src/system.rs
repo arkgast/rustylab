@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use num::{CheckedAdd, One, Zero};
 
 pub trait Config {
-    type AccountId: Ord + Clone;
+    type AccountId: Clone + Eq + Ord;
     type BlockNumber: CheckedAdd + Copy + One + Zero;
     type Nonce: CheckedAdd + Copy + One + Zero;
 }

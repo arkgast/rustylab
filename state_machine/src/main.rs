@@ -1,6 +1,5 @@
 mod balances;
 mod system;
-mod types;
 
 #[derive(Debug)]
 pub struct Runtime {
@@ -15,7 +14,6 @@ impl system::Config for Runtime {
 }
 
 impl balances::Config for Runtime {
-    type AccountId = String;
     type Balance = u128;
 }
 
