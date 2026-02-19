@@ -2,6 +2,11 @@ use std::collections::BTreeMap;
 
 use num::{CheckedAdd, CheckedSub, Zero};
 
+pub trait Config {
+    type AccountId: Clone + Eq + Ord;
+    type Balance: CheckedAdd + CheckedSub + Copy + Eq + Zero;
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum TransferError {
     NotEnoughBalance,
@@ -11,43 +16,39 @@ pub enum TransferError {
 }
 
 #[derive(Debug)]
-pub struct Pallet<AccountId, Balance> {
-    balances: BTreeMap<AccountId, Balance>,
+pub struct Pallet<T: Config> {
+    balances: BTreeMap<T::AccountId, T::Balance>,
 }
 
-impl<AccountId, Balance> Pallet<AccountId, Balance>
-where
-    AccountId: Clone + Eq + Ord,
-    Balance: CheckedAdd + CheckedSub + Copy + Eq + Zero,
-{
+impl<T: Config> Pallet<T> {
     pub fn new() -> Self {
         Self {
             balances: BTreeMap::new(),
         }
     }
 
-    pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
+    pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
         self.balances.insert(who.clone(), amount);
     }
 
-    pub fn balance(&self, who: &AccountId) -> Balance {
+    pub fn balance(&self, who: &T::AccountId) -> T::Balance {
         self.balances
             .get(who)
             .copied()
-            .unwrap_or_else(Balance::zero)
+            .unwrap_or_else(T::Balance::zero)
     }
 
     pub fn transfer(
         &mut self,
-        from: &AccountId,
-        to: &AccountId,
-        amount: Balance,
+        from: &T::AccountId,
+        to: &T::AccountId,
+        amount: T::Balance,
     ) -> Result<(), TransferError> {
         if from == to {
             return Err(TransferError::CannotTransferToSelf);
         }
 
-        if amount == Balance::zero() {
+        if amount == T::Balance::zero() {
             return Err(TransferError::ZeroTransfer);
         }
 
@@ -81,10 +82,14 @@ mod tests {
         expected_error: TransferError,
     }
 
-    fn assert_failed_transfer_is_atomic(
-        pallet: &mut Pallet<types::AccountId, types::Balance>,
-        case: TransferCase,
-    ) {
+    struct TestPallet;
+
+    impl super::Config for TestPallet {
+        type AccountId = String;
+        type Balance = u128;
+    }
+
+    fn assert_failed_transfer_is_atomic(pallet: &mut Pallet<TestPallet>, case: TransferCase) {
         let from_before = pallet.balance(&case.from);
         let to_before = pallet.balance(&case.to);
 
@@ -99,14 +104,14 @@ mod tests {
 
     #[test]
     fn balance_for_unknown_account_is_zero() {
-        let mut pallet = Pallet::new();
+        let mut pallet = Pallet::<TestPallet>::new();
         pallet.set_balance(&"alice".to_string(), 10);
         assert_eq!(pallet.balance(&"bob".to_string()), 0);
     }
 
     #[test]
     fn set_balance_overwrites() {
-        let mut pallet = Pallet::new();
+        let mut pallet = Pallet::<TestPallet>::new();
         let alice = "alice".to_string();
         pallet.set_balance(&alice, 100);
         pallet.set_balance(&alice, 50);
@@ -115,7 +120,7 @@ mod tests {
 
     #[test]
     fn transfer_deducts_amount_from_sender() {
-        let mut pallet = Pallet::new();
+        let mut pallet = Pallet::<TestPallet>::new();
         let alice = "alice".to_string();
         let bob = "bob".to_string();
 
@@ -128,7 +133,7 @@ mod tests {
 
     #[test]
     fn transfer_credits_amount_to_receiver() {
-        let mut pallet = Pallet::new();
+        let mut pallet = Pallet::<TestPallet>::new();
         let alice = "alice".to_string();
         let bob = "bob".to_string();
 
