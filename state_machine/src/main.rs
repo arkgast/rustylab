@@ -1,5 +1,18 @@
 mod balances;
+mod support;
 mod system;
+
+mod types {
+    pub type AccountId = String;
+    pub type Balance = u128;
+    pub type BlockNumber = u32;
+    pub type Nonce = u32;
+    pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
+    pub type Header = crate::support::Header<BlockNumber>;
+    pub type Block = crate::support::Block<Header, Extrinsic>;
+}
+
+pub enum RuntimeCall {}
 
 #[derive(Debug)]
 pub struct Runtime {
@@ -8,13 +21,13 @@ pub struct Runtime {
 }
 
 impl system::Config for Runtime {
-    type AccountId = String;
-    type BlockNumber = u32;
-    type Nonce = u32;
+    type AccountId = crate::types::AccountId;
+    type BlockNumber = crate::types::BlockNumber;
+    type Nonce = crate::types::Nonce;
 }
 
 impl balances::Config for Runtime {
-    type Balance = u128;
+    type Balance = crate::types::Balance;
 }
 
 #[allow(clippy::new_without_default)]

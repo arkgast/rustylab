@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use num::{CheckedAdd, CheckedSub, Zero};
 
-use crate::system;
+use crate::{support, system};
 
 pub trait Config: system::Config {
     type Balance: CheckedAdd + CheckedSub + Copy + Eq + Zero;
@@ -44,7 +44,7 @@ impl<T: Config> Pallet<T> {
         from: &T::AccountId,
         to: &T::AccountId,
         amount: T::Balance,
-    ) -> Result<(), TransferError> {
+    ) -> support::DispatchResult<TransferError> {
         if from == to {
             return Err(TransferError::CannotTransferToSelf);
         }
