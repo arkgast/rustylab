@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt::Display};
 
 use num::{CheckedAdd, CheckedSub, Zero};
 
@@ -14,6 +14,12 @@ pub enum TransferError {
     BalanceOverflow,
     CannotTransferToSelf,
     ZeroTransfer,
+}
+
+impl Display for TransferError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Debug)]

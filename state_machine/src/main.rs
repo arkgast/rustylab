@@ -1,16 +1,9 @@
+use crate::{balances::TransferError, support::Dispatch, system::SystemError};
+
 mod balances;
 mod support;
 mod system;
-
-mod types {
-    pub type AccountId = String;
-    pub type Balance = u128;
-    pub type BlockNumber = u32;
-    pub type Nonce = u32;
-    pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
-    pub type Header = crate::support::Header<BlockNumber>;
-    pub type Block = crate::support::Block<Header, Extrinsic>;
-}
+mod types;
 
 pub enum RuntimeCall {}
 
@@ -21,13 +14,26 @@ pub struct Runtime {
 }
 
 impl system::Config for Runtime {
-    type AccountId = crate::types::AccountId;
-    type BlockNumber = crate::types::BlockNumber;
-    type Nonce = crate::types::Nonce;
+    type AccountId = types::AccountId;
+    type BlockNumber = types::BlockNumber;
+    type Nonce = types::Nonce;
 }
 
 impl balances::Config for Runtime {
-    type Balance = crate::types::Balance;
+    type Balance = types::Balance;
+}
+
+impl support::Dispatch for Runtime {
+    type Caller = types::AccountId;
+    type Call = RuntimeCall;
+
+    fn dispatch<T>(
+        &mut self,
+        _caller: Self::Caller,
+        _call: Self::Call,
+    ) -> support::DispatchResult<T> {
+        Ok(())
+    }
 }
 
 #[allow(clippy::new_without_default)]
@@ -37,6 +43,25 @@ impl Runtime {
             system: system::Pallet::new(),
             balances: balances::Pallet::new(),
         }
+    }
+
+    pub fn execute_block(&mut self, block: types::Block) -> support::DispatchResult<SystemError> {
+        self.system.inc_block_number()?;
+
+        for (idx, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
+            self.system.inc_nonce(&caller)?;
+
+            let res = self.dispatch::<TransferError>(caller, call).map_err(|e| {
+                eprintln!(
+                    "Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
+                    block.header.block_number, idx, e
+                )
+            });
+
+            println!("{:?}", res);
+        }
+
+        Ok(())
     }
 }
 
@@ -50,11 +75,10 @@ fn main() {
 
     // simulate block
     runtime.system.inc_block_number().unwrap();
-    assert_eq!(runtime.system.block_number(), 1);
 
     // first transaction
-    runtime.system.inc_nonce(&"alice".to_string()).unwrap();
-    assert_eq!(runtime.system.nonce(&alice), 1);
+    runtime.system.inc_nonce(&alice).unwrap();
+
     let transfer_result = runtime
         .balances
         .transfer(&"alice".to_string(), &bob, 30)
