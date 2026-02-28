@@ -1,11 +1,16 @@
-use crate::{balances::TransferError, support::Dispatch, system::SystemError};
-
 mod balances;
 mod support;
 mod system;
 mod types;
 
-pub enum RuntimeCall {}
+use crate::support::Dispatch;
+
+pub enum RuntimeCall {
+    BalancesTransfer {
+        to: types::AccountId,
+        amount: types::Balance,
+    },
+}
 
 #[derive(Debug)]
 pub struct Runtime {
@@ -24,14 +29,20 @@ impl balances::Config for Runtime {
 }
 
 impl support::Dispatch for Runtime {
-    type Caller = types::AccountId;
+    type Caller = <Runtime as system::Config>::AccountId;
     type Call = RuntimeCall;
+    type Error = balances::TransferError;
 
-    fn dispatch<T>(
+    fn dispatch(
         &mut self,
-        _caller: Self::Caller,
-        _call: Self::Call,
-    ) -> support::DispatchResult<T> {
+        caller: Self::Caller,
+        runtime_call: Self::Call,
+    ) -> support::DispatchResult<Self::Error> {
+        match runtime_call {
+            RuntimeCall::BalancesTransfer { to, amount } => {
+                self.balances.transfer(&caller, &to, amount)?;
+            }
+        }
         Ok(())
     }
 }
@@ -45,13 +56,16 @@ impl Runtime {
         }
     }
 
-    pub fn execute_block(&mut self, block: types::Block) -> support::DispatchResult<SystemError> {
+    pub fn execute_block(
+        &mut self,
+        block: types::Block,
+    ) -> support::DispatchResult<system::SystemError> {
         self.system.inc_block_number()?;
 
         for (idx, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
             self.system.inc_nonce(&caller)?;
 
-            let res = self.dispatch::<TransferError>(caller, call).map_err(|e| {
+            let res = self.dispatch(caller, call).map_err(|e| {
                 eprintln!(
                     "Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
                     block.header.block_number, idx, e
@@ -66,32 +80,56 @@ impl Runtime {
 }
 
 fn main() {
-    let mut runtime = Runtime::new();
     let alice = "alice".to_string();
     let bob = "bob".to_string();
 
+    let mut runtime = Runtime::new();
     runtime.balances.set_balance(&alice, 100);
-    runtime.balances.set_balance(&bob, 0);
 
-    // simulate block
-    runtime.system.inc_block_number().unwrap();
+    // Tx #1
+    let block = types::Block {
+        header: support::Header {
+            block_number: runtime.system.block_number(),
+        },
+        extrinsics: vec![types::Extrinsic {
+            caller: alice.clone(),
+            call: RuntimeCall::BalancesTransfer {
+                to: bob.clone(),
+                amount: 100,
+            },
+        }],
+    };
+    runtime.execute_block(block).expect("Invalid block");
 
-    // first transaction
-    runtime.system.inc_nonce(&alice).unwrap();
+    // Tx #2
+    let block = types::Block {
+        header: support::Header {
+            block_number: runtime.system.block_number(),
+        },
+        extrinsics: vec![types::Extrinsic {
+            caller: alice.clone(),
+            call: RuntimeCall::BalancesTransfer {
+                to: bob.clone(),
+                amount: 100,
+            },
+        }],
+    };
+    runtime.execute_block(block).expect("Invalid block");
 
-    let transfer_result = runtime
-        .balances
-        .transfer(&"alice".to_string(), &bob, 30)
-        .inspect_err(|e| eprintln!("1st tx error: {:?}", e));
-    println!("1st tx: {:?}", transfer_result);
-
-    // second transaction
-    runtime.system.inc_nonce(&alice).unwrap();
-    let transfer_result = runtime
-        .balances
-        .transfer(&alice, &bob, 80)
-        .inspect_err(|e| eprintln!("2nd tx error: {:?}", e));
-    println!("2nd tx: {:?}", transfer_result);
+    // Tx #3
+    let block = types::Block {
+        header: support::Header {
+            block_number: runtime.system.block_number(),
+        },
+        extrinsics: vec![types::Extrinsic {
+            caller: alice.clone(),
+            call: RuntimeCall::BalancesTransfer {
+                to: bob.clone(),
+                amount: 100,
+            },
+        }],
+    };
+    runtime.execute_block(block).expect("Invalid block");
 
     println!("Runtime state: {:#?}", runtime);
 }

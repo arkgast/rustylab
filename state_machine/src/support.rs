@@ -17,6 +17,7 @@ pub type DispatchResult<T> = Result<(), T>;
 pub trait Dispatch {
     type Caller;
     type Call;
+    type Error;
 
-    fn dispatch<T>(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult<T>;
+    fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult<Self::Error>;
 }
