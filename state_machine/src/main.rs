@@ -1,4 +1,5 @@
 mod balances;
+mod errors;
 mod support;
 mod system;
 mod types;
@@ -28,7 +29,7 @@ impl balances::Config for Runtime {
 impl support::Dispatch for Runtime {
     type Caller = <Runtime as system::Config>::AccountId;
     type Call = RuntimeCall;
-    type Error = balances::TransferError;
+    type Error = errors::TransferError;
 
     fn dispatch(
         &mut self,
@@ -54,7 +55,7 @@ impl Runtime {
     pub fn execute_block(
         &mut self,
         block: types::Block,
-    ) -> support::DispatchResult<system::SystemError> {
+    ) -> support::DispatchResult<errors::SystemError> {
         self.system.inc_block_number()?;
 
         for (idx, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {

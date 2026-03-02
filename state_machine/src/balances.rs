@@ -1,25 +1,11 @@
-use std::{collections::BTreeMap, fmt::Display};
+use std::collections::BTreeMap;
 
 use num::{CheckedAdd, CheckedSub, Zero};
 
-use crate::{support, system};
+use crate::{errors, support, system};
 
 pub trait Config: system::Config {
     type Balance: CheckedAdd + CheckedSub + Copy + Eq + Zero;
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum TransferError {
-    NotEnoughBalance,
-    BalanceOverflow,
-    CannotTransferToSelf,
-    ZeroTransfer,
-}
-
-impl Display for TransferError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 pub enum Call<T: Config> {
@@ -32,7 +18,7 @@ pub enum Call<T: Config> {
 impl<T: Config> support::Dispatch for Pallet<T> {
     type Call = Call<T>;
     type Caller = T::AccountId;
-    type Error = TransferError;
+    type Error = errors::TransferError;
 
     fn dispatch(
         &mut self,
@@ -76,13 +62,13 @@ impl<T: Config> Pallet<T> {
         from: &T::AccountId,
         to: &T::AccountId,
         amount: T::Balance,
-    ) -> support::DispatchResult<TransferError> {
+    ) -> support::DispatchResult<errors::TransferError> {
         if from == to {
-            return Err(TransferError::CannotTransferToSelf);
+            return Err(errors::TransferError::CannotTransferToSelf);
         }
 
         if amount == T::Balance::zero() {
-            return Err(TransferError::ZeroTransfer);
+            return Err(errors::TransferError::ZeroTransfer);
         }
 
         let from_current_balance = self.balance(from);
@@ -90,10 +76,10 @@ impl<T: Config> Pallet<T> {
 
         let from_new_balance = from_current_balance
             .checked_sub(&amount)
-            .ok_or(TransferError::NotEnoughBalance)?;
+            .ok_or(errors::TransferError::NotEnoughBalance)?;
         let to_new_balance = to_current_balance
             .checked_add(&amount)
-            .ok_or(TransferError::BalanceOverflow)?;
+            .ok_or(errors::TransferError::BalanceOverflow)?;
 
         self.set_balance(from, from_new_balance);
         self.set_balance(to, to_new_balance);
@@ -110,7 +96,7 @@ mod tests {
         from: T::AccountId,
         to: T::AccountId,
         amount: T::Balance,
-        expected_error: TransferError,
+        expected_error: errors::TransferError,
     }
 
     struct TestPallet;
@@ -197,7 +183,7 @@ mod tests {
                 from: alice.clone(),
                 to: bob.clone(),
                 amount: 100,
-                expected_error: TransferError::NotEnoughBalance,
+                expected_error: errors::TransferError::NotEnoughBalance,
             },
         );
     }
@@ -217,7 +203,7 @@ mod tests {
                 from: alice.clone(),
                 to: bob.clone(),
                 amount: 50,
-                expected_error: TransferError::BalanceOverflow,
+                expected_error: errors::TransferError::BalanceOverflow,
             },
         );
     }
@@ -233,7 +219,7 @@ mod tests {
                 from: alice.clone(),
                 to: alice.clone(),
                 amount: 100,
-                expected_error: TransferError::CannotTransferToSelf,
+                expected_error: errors::TransferError::CannotTransferToSelf,
             },
         );
     }
@@ -250,7 +236,7 @@ mod tests {
                 from: alice.clone(),
                 to: bob.clone(),
                 amount: 0,
-                expected_error: TransferError::ZeroTransfer,
+                expected_error: errors::TransferError::ZeroTransfer,
             },
         );
     }

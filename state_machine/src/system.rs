@@ -1,17 +1,12 @@
 use std::collections::BTreeMap;
 
+use crate::errors;
 use num::{CheckedAdd, One, Zero};
 
 pub trait Config {
     type AccountId: Clone + Eq + Ord;
     type BlockNumber: CheckedAdd + Copy + One + Zero;
     type Nonce: CheckedAdd + Copy + One + Zero;
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum SystemError {
-    BlockNumberOverflow,
-    NonceOverflow,
 }
 
 #[derive(Debug)]
@@ -32,11 +27,11 @@ impl<T: Config> Pallet<T> {
         self.block_number
     }
 
-    pub fn inc_block_number(&mut self) -> Result<(), SystemError> {
+    pub fn inc_block_number(&mut self) -> Result<(), errors::SystemError> {
         self.block_number = self
             .block_number
             .checked_add(&T::BlockNumber::one())
-            .ok_or(SystemError::BlockNumberOverflow)?;
+            .ok_or(errors::SystemError::BlockNumberOverflow)?;
 
         Ok(())
     }
@@ -45,11 +40,11 @@ impl<T: Config> Pallet<T> {
         self.nonce.get(who).copied().unwrap_or_else(T::Nonce::zero)
     }
 
-    pub fn inc_nonce(&mut self, who: &T::AccountId) -> Result<(), SystemError> {
+    pub fn inc_nonce(&mut self, who: &T::AccountId) -> Result<(), errors::SystemError> {
         let nonce = self.nonce(who);
         let new_nonce = nonce
             .checked_add(&T::Nonce::one())
-            .ok_or(SystemError::NonceOverflow)?;
+            .ok_or(errors::SystemError::NonceOverflow)?;
         self.nonce.insert(who.clone(), new_nonce);
         Ok(())
     }
@@ -139,7 +134,7 @@ mod test {
         pallet.set_nonce(&alice, u32::MAX);
 
         let err = pallet.inc_nonce(&alice).unwrap_err();
-        assert_eq!(err, SystemError::NonceOverflow);
+        assert_eq!(err, errors::SystemError::NonceOverflow);
 
         assert_eq!(pallet.nonce(&alice), u32::MAX);
     }
@@ -150,7 +145,7 @@ mod test {
         pallet.set_block_number(u32::MAX);
 
         let err = pallet.inc_block_number().unwrap_err();
-        assert_eq!(err, SystemError::BlockNumberOverflow);
+        assert_eq!(err, errors::SystemError::BlockNumberOverflow);
 
         assert_eq!(pallet.block_number(), u32::MAX);
     }
