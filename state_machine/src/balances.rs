@@ -22,6 +22,32 @@ impl Display for TransferError {
     }
 }
 
+pub enum Call<T: Config> {
+    Transfer {
+        to: T::AccountId,
+        amount: T::Balance,
+    },
+}
+
+impl<T: Config> support::Dispatch for Pallet<T> {
+    type Call = Call<T>;
+    type Caller = T::AccountId;
+    type Error = TransferError;
+
+    fn dispatch(
+        &mut self,
+        caller: Self::Caller,
+        call: Self::Call,
+    ) -> support::DispatchResult<Self::Error> {
+        match call {
+            Call::Transfer { to, amount } => {
+                self.transfer(&caller, &to, amount)?;
+            }
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug)]
 pub struct Pallet<T: Config> {
     balances: BTreeMap<T::AccountId, T::Balance>,

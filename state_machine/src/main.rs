@@ -6,10 +6,7 @@ mod types;
 use crate::support::Dispatch;
 
 pub enum RuntimeCall {
-    BalancesTransfer {
-        to: types::AccountId,
-        amount: types::Balance,
-    },
+    Balances(balances::Call<Runtime>),
 }
 
 #[derive(Debug)]
@@ -39,9 +36,7 @@ impl support::Dispatch for Runtime {
         runtime_call: Self::Call,
     ) -> support::DispatchResult<Self::Error> {
         match runtime_call {
-            RuntimeCall::BalancesTransfer { to, amount } => {
-                self.balances.transfer(&caller, &to, amount)?;
-            }
+            RuntimeCall::Balances(call) => self.balances.dispatch(caller, call)?,
         }
         Ok(())
     }
@@ -84,7 +79,7 @@ fn main() {
     let bob = "bob".to_string();
 
     let mut runtime = Runtime::new();
-    runtime.balances.set_balance(&alice, 100);
+    runtime.balances.set_balance(&alice, 100_000);
 
     // Tx #1
     let block = types::Block {
@@ -93,10 +88,10 @@ fn main() {
         },
         extrinsics: vec![types::Extrinsic {
             caller: alice.clone(),
-            call: RuntimeCall::BalancesTransfer {
+            call: RuntimeCall::Balances(balances::Call::Transfer {
                 to: bob.clone(),
-                amount: 100,
-            },
+                amount: 10,
+            }),
         }],
     };
     runtime.execute_block(block).expect("Invalid block");
@@ -108,25 +103,10 @@ fn main() {
         },
         extrinsics: vec![types::Extrinsic {
             caller: alice.clone(),
-            call: RuntimeCall::BalancesTransfer {
+            call: RuntimeCall::Balances(balances::Call::Transfer {
                 to: bob.clone(),
                 amount: 100,
-            },
-        }],
-    };
-    runtime.execute_block(block).expect("Invalid block");
-
-    // Tx #3
-    let block = types::Block {
-        header: support::Header {
-            block_number: runtime.system.block_number(),
-        },
-        extrinsics: vec![types::Extrinsic {
-            caller: alice.clone(),
-            call: RuntimeCall::BalancesTransfer {
-                to: bob.clone(),
-                amount: 100,
-            },
+            }),
         }],
     };
     runtime.execute_block(block).expect("Invalid block");
