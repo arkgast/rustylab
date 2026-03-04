@@ -1,5 +1,6 @@
 mod balances;
 mod errors;
+mod proof_of_existene;
 mod support;
 mod system;
 mod types;
