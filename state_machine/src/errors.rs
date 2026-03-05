@@ -1,5 +1,18 @@
 use std::fmt::Display;
 
+#[derive(Debug, PartialEq)]
+pub enum ProofOfExistenceError {
+    ClaimAlreadyExists,
+    ClaimNotFound,
+    NotOwner,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum SystemError {
+    BlockNumberOverflow,
+    NonceOverflow,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum TransferError {
     NotEnoughBalance,
@@ -12,10 +25,4 @@ impl Display for TransferError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum SystemError {
-    BlockNumberOverflow,
-    NonceOverflow,
 }

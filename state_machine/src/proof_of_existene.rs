@@ -1,21 +1,41 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
-use crate::system;
-
-#[derive(Debug, PartialEq)]
-pub enum ProofOfExistenceError {
-    ClaimAlreadyExists,
-    ClaimNotFound,
-    NotOwner,
-}
+use crate::{errors, support, system};
 
 pub trait Config: system::Config {
     type Content: Debug + Ord + Clone;
 }
 
+pub enum Call<T: Config> {
+    CreateClaim { claim: T::Content },
+    RevokeClaim { claim: T::Content },
+}
+
 #[derive(Debug)]
 pub struct Pallet<T: Config> {
     claims: BTreeMap<T::Content, T::AccountId>,
+}
+
+impl<T: Config> support::Dispatch for Pallet<T> {
+    type Call = Call<T>;
+    type Caller = T::AccountId;
+    type Error = errors::ProofOfExistenceError;
+
+    fn dispatch(
+        &mut self,
+        caller: Self::Caller,
+        call: Self::Call,
+    ) -> support::DispatchResult<Self::Error> {
+        match call {
+            Call::CreateClaim { claim } => {
+                self.create_claim(&caller, &claim)?;
+            }
+            Call::RevokeClaim { claim } => {
+                self.revoke_claim(&caller, &claim)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<T: Config> Pallet<T> {
@@ -29,9 +49,9 @@ impl<T: Config> Pallet<T> {
         &mut self,
         caller: &T::AccountId,
         claim: &T::Content,
-    ) -> Result<(), ProofOfExistenceError> {
+    ) -> Result<(), errors::ProofOfExistenceError> {
         if self.get_claim(claim).is_some() {
-            return Err(ProofOfExistenceError::ClaimAlreadyExists);
+            return Err(errors::ProofOfExistenceError::ClaimAlreadyExists);
         }
         self.claims.insert(claim.clone(), caller.clone());
         Ok(())
@@ -48,13 +68,13 @@ impl<T: Config> Pallet<T> {
         &mut self,
         caller: &T::AccountId,
         claim: &T::Content,
-    ) -> Result<(), ProofOfExistenceError> {
+    ) -> Result<(), errors::ProofOfExistenceError> {
         let owner = self
             .claims
             .get(claim)
-            .ok_or(ProofOfExistenceError::ClaimNotFound)?;
+            .ok_or(errors::ProofOfExistenceError::ClaimNotFound)?;
         if owner != caller {
-            return Err(ProofOfExistenceError::NotOwner);
+            return Err(errors::ProofOfExistenceError::NotOwner);
         }
         self.claims.remove(claim);
         Ok(())
@@ -99,7 +119,7 @@ mod test {
 
         assert_eq!(
             pallet.create_claim(&alice, content).unwrap_err(),
-            ProofOfExistenceError::ClaimAlreadyExists
+            errors::ProofOfExistenceError::ClaimAlreadyExists
         );
     }
 
@@ -137,7 +157,7 @@ mod test {
 
         assert_eq!(
             pallet.revoke_claim(&alice, &"content").unwrap_err(),
-            ProofOfExistenceError::ClaimNotFound
+            errors::ProofOfExistenceError::ClaimNotFound
         );
     }
 
@@ -152,7 +172,7 @@ mod test {
 
         assert_eq!(
             pallet.revoke_claim(&bob, content).unwrap_err(),
-            ProofOfExistenceError::NotOwner
+            errors::ProofOfExistenceError::NotOwner
         );
     }
 
