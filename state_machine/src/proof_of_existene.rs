@@ -39,7 +39,7 @@ impl<T: Config> support::Dispatch for Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             claims: BTreeMap::new(),
         }
