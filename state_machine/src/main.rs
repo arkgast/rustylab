@@ -72,14 +72,12 @@ impl Runtime {
         for (idx, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
             self.system.inc_nonce(&caller)?;
 
-            let res = self.dispatch(caller, call).map_err(|e| {
+            let _ = self.dispatch(caller, call).map_err(|e| {
                 eprintln!(
                     "Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
                     block.header.block_number, idx, e
                 )
             });
-
-            println!("{:?}", res);
         }
 
         Ok(())
@@ -89,39 +87,45 @@ impl Runtime {
 fn main() {
     let alice = "alice".to_string();
     let bob = "bob".to_string();
+    let content = "content".to_string();
 
     let mut runtime = Runtime::new();
     runtime.balances.set_balance(&alice, 100_000);
 
-    // Tx #1
     let block = types::Block {
         header: support::Header {
             block_number: runtime.system.block_number(),
         },
-        extrinsics: vec![types::Extrinsic {
-            caller: alice.clone(),
-            call: RuntimeCall::Balances(balances::Call::Transfer {
-                to: bob.clone(),
-                amount: 10,
-            }),
-        }],
+        extrinsics: vec![
+            types::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::Balances(balances::Call::Transfer {
+                    to: bob.clone(),
+                    amount: 10,
+                }),
+            },
+            types::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::Balances(balances::Call::Transfer {
+                    to: bob.clone(),
+                    amount: 100,
+                }),
+            },
+            types::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::CreateClaim {
+                    claim: content.clone(),
+                }),
+            },
+            types::Extrinsic {
+                caller: bob.clone(),
+                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::CreateClaim {
+                    claim: content.clone(),
+                }),
+            },
+        ],
     };
     runtime.execute_block(block).expect("Invalid block");
 
-    // Tx #2
-    let block = types::Block {
-        header: support::Header {
-            block_number: runtime.system.block_number(),
-        },
-        extrinsics: vec![types::Extrinsic {
-            caller: alice.clone(),
-            call: RuntimeCall::Balances(balances::Call::Transfer {
-                to: bob.clone(),
-                amount: 100,
-            }),
-        }],
-    };
-    runtime.execute_block(block).expect("Invalid block");
-
-    println!("Runtime state: {:#?}", runtime);
+    println!("\nRuntime state: {:#?}", runtime);
 }
