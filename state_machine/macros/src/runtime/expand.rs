@@ -34,10 +34,14 @@ pub fn expand_runtime(def: RuntimeDef) -> proc_macro2::TokenStream {
             }
 
             // Execute a block of extrinsics. Increments the block number.
-            fn execute_block(&mut self, block: types::Block) -> crate::support::DispatchResult {
+            fn execute_block(&mut self, block: types::Block) -> crate::support::DispatchResult<crate::errors::RuntimeError> {
                 self.system.inc_block_number();
                 if block.header.block_number != self.system.block_number() {
-                    return Err(&"block number does not match what is expected")
+                    return Err(
+                        crate::errors::RuntimeError::System(
+                            crate::errors::SystemError::InvalidBlockNumber,
+                        )
+                    )
                 }
                 for (i, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
                     self.system.inc_nonce(&caller);
@@ -65,8 +69,10 @@ pub fn expand_runtime(def: RuntimeDef) -> proc_macro2::TokenStream {
         }
 
         impl crate::support::Dispatch for #runtime_struct {
-            type Caller = <Runtime as system::Config>::AccountId;
+            type Caller = <#runtime_struct as system::Config>::AccountId;
             type Call = RuntimeCall;
+            type Error = crate::errors::RuntimeError;
+
             // Dispatch a call on behalf of a caller. Increments the caller's nonce.
             //
             // Dispatch allows us to identify which underlying pallet call we want to execute.
@@ -76,7 +82,7 @@ pub fn expand_runtime(def: RuntimeDef) -> proc_macro2::TokenStream {
                 &mut self,
                 caller: Self::Caller,
                 runtime_call: Self::Call,
-            ) -> crate::support::DispatchResult {
+            ) -> crate::support::DispatchResult<Self::Error> {
                 // This match statement will allow us to correctly route `RuntimeCall`s
                 // to the appropriate pallet level call.
                 match runtime_call {

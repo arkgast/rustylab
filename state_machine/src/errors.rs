@@ -20,6 +20,7 @@ impl Display for ProofOfExistenceError {
 #[derive(Debug, PartialEq, Eq)]
 pub enum SystemError {
     BlockNumberOverflow,
+    InvalidBlockNumber,
     NonceOverflow,
 }
 
@@ -28,6 +29,7 @@ impl Display for SystemError {
         match self {
             SystemError::NonceOverflow => write!(f, "nonce overflow"),
             SystemError::BlockNumberOverflow => write!(f, "block number overflow"),
+            SystemError::InvalidBlockNumber => write!(f, "invalid block number"),
         }
     }
 }

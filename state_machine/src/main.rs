@@ -7,12 +7,8 @@ mod types;
 
 use crate::support::Dispatch;
 
-pub enum RuntimeCall {
-    Balances(balances::Call<Runtime>),
-    ProofOfExistence(proof_of_existene::Call<Runtime>),
-}
-
 #[derive(Debug)]
+#[macros::runtime]
 pub struct Runtime {
     system: system::Pallet<Self>,
     balances: balances::Pallet<Self>,
@@ -33,57 +29,6 @@ impl proof_of_existene::Config for Runtime {
     type Content = types::Content;
 }
 
-impl support::Dispatch for Runtime {
-    type Caller = <Runtime as system::Config>::AccountId;
-    type Call = RuntimeCall;
-    type Error = errors::RuntimeError;
-
-    fn dispatch(
-        &mut self,
-        caller: Self::Caller,
-        runtime_call: Self::Call,
-    ) -> support::DispatchResult<Self::Error> {
-        match runtime_call {
-            RuntimeCall::Balances(call) => self.balances.dispatch(caller, call)?,
-            RuntimeCall::ProofOfExistence(call) => self.proof_of_existene.dispatch(caller, call)?,
-        }
-        Ok(())
-    }
-}
-
-#[allow(clippy::new_without_default)]
-impl Runtime {
-    pub fn new() -> Self {
-        Self {
-            system: system::Pallet::new(),
-            balances: balances::Pallet::new(),
-            proof_of_existene: proof_of_existene::Pallet::new(),
-        }
-    }
-
-    pub fn execute_block(
-        &mut self,
-        block: types::Block,
-    ) -> support::DispatchResult<errors::SystemError> {
-        self.system.inc_block_number()?;
-
-        // An extrinsic error is not enough to trigger the block to be invalid. We capture the
-        // result, and emit an error message if one is emitted.
-        for (idx, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
-            self.system.inc_nonce(&caller)?;
-
-            let _ = self.dispatch(caller, call).map_err(|e| {
-                eprintln!(
-                    "Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
-                    block.header.block_number, idx, e
-                )
-            });
-        }
-
-        Ok(())
-    }
-}
-
 fn main() {
     let alice = "alice".to_string();
     let bob = "bob".to_string();
@@ -93,33 +38,31 @@ fn main() {
     runtime.balances.set_balance(&alice, 100_000);
 
     let block = types::Block {
-        header: support::Header {
-            block_number: runtime.system.block_number(),
-        },
+        header: support::Header { block_number: 1 },
         extrinsics: vec![
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::transfer {
+                call: RuntimeCall::balances(balances::Call::transfer {
                     to: bob.clone(),
                     amount: 10,
                 }),
             },
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::transfer {
+                call: RuntimeCall::balances(balances::Call::transfer {
                     to: bob.clone(),
                     amount: 100,
                 }),
             },
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::create_claim {
+                call: RuntimeCall::proof_of_existene(proof_of_existene::Call::create_claim {
                     claim: content.clone(),
                 }),
             },
             types::Extrinsic {
                 caller: bob.clone(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::create_claim {
+                call: RuntimeCall::proof_of_existene(proof_of_existene::Call::create_claim {
                     claim: content.clone(),
                 }),
             },
