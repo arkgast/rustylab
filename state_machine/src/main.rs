@@ -99,27 +99,27 @@ fn main() {
         extrinsics: vec![
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::Transfer {
+                call: RuntimeCall::Balances(balances::Call::transfer {
                     to: bob.clone(),
                     amount: 10,
                 }),
             },
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::Balances(balances::Call::Transfer {
+                call: RuntimeCall::Balances(balances::Call::transfer {
                     to: bob.clone(),
                     amount: 100,
                 }),
             },
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::CreateClaim {
+                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::create_claim {
                     claim: content.clone(),
                 }),
             },
             types::Extrinsic {
                 caller: bob.clone(),
-                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::CreateClaim {
+                call: RuntimeCall::ProofOfExistence(proof_of_existene::Call::create_claim {
                     claim: content.clone(),
                 }),
             },

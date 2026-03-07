@@ -8,35 +8,42 @@ pub trait Config: system::Config {
     type Balance: CheckedAdd + CheckedSub + Copy + Eq + Zero;
 }
 
-pub enum Call<T: Config> {
-    Transfer {
-        to: T::AccountId,
-        amount: T::Balance,
-    },
-}
-
-impl<T: Config> support::Dispatch for Pallet<T> {
-    type Call = Call<T>;
-    type Caller = T::AccountId;
-    type Error = errors::TransferError;
-
-    fn dispatch(
-        &mut self,
-        caller: Self::Caller,
-        call: Self::Call,
-    ) -> support::DispatchResult<Self::Error> {
-        match call {
-            Call::Transfer { to, amount } => {
-                self.transfer(&caller, &to, amount)?;
-            }
-        }
-        Ok(())
-    }
-}
-
 #[derive(Debug)]
 pub struct Pallet<T: Config> {
     balances: BTreeMap<T::AccountId, T::Balance>,
+}
+
+#[macros::call]
+impl<T: Config> Pallet<T> {
+    pub fn transfer(
+        &mut self,
+        caller: T::AccountId,
+        to: T::AccountId,
+        amount: T::Balance,
+    ) -> support::DispatchResult<errors::TransferError> {
+        if caller == to {
+            return Err(errors::TransferError::CannotTransferToSelf);
+        }
+
+        if amount == T::Balance::zero() {
+            return Err(errors::TransferError::ZeroTransfer);
+        }
+
+        let from_current_balance = self.balance(&caller);
+        let to_current_balance = self.balance(&to);
+
+        let from_new_balance = from_current_balance
+            .checked_sub(&amount)
+            .ok_or(errors::TransferError::NotEnoughBalance)?;
+        let to_new_balance = to_current_balance
+            .checked_add(&amount)
+            .ok_or(errors::TransferError::BalanceOverflow)?;
+
+        self.set_balance(&caller, from_new_balance);
+        self.set_balance(&to, to_new_balance);
+
+        Ok(())
+    }
 }
 
 impl<T: Config> Pallet<T> {
@@ -55,36 +62,6 @@ impl<T: Config> Pallet<T> {
             .get(who)
             .copied()
             .unwrap_or_else(T::Balance::zero)
-    }
-
-    pub fn transfer(
-        &mut self,
-        from: &T::AccountId,
-        to: &T::AccountId,
-        amount: T::Balance,
-    ) -> support::DispatchResult<errors::TransferError> {
-        if from == to {
-            return Err(errors::TransferError::CannotTransferToSelf);
-        }
-
-        if amount == T::Balance::zero() {
-            return Err(errors::TransferError::ZeroTransfer);
-        }
-
-        let from_current_balance = self.balance(from);
-        let to_current_balance = self.balance(to);
-
-        let from_new_balance = from_current_balance
-            .checked_sub(&amount)
-            .ok_or(errors::TransferError::NotEnoughBalance)?;
-        let to_new_balance = to_current_balance
-            .checked_add(&amount)
-            .ok_or(errors::TransferError::BalanceOverflow)?;
-
-        self.set_balance(from, from_new_balance);
-        self.set_balance(to, to_new_balance);
-
-        Ok(())
     }
 }
 
@@ -119,7 +96,7 @@ mod tests {
         let to_before = pallet.balance(&case.to);
 
         let err = pallet
-            .transfer(&case.from, &case.to, case.amount)
+            .transfer(case.from.clone(), case.to.clone(), case.amount)
             .unwrap_err();
         assert_eq!(err, case.expected_error);
 
@@ -150,7 +127,7 @@ mod tests {
         let bob = "bob".to_string();
 
         pallet.set_balance(&alice, 100);
-        let transfer_result = pallet.transfer(&alice, &bob, 50);
+        let transfer_result = pallet.transfer(alice.clone(), bob.clone(), 50);
 
         assert_eq!(pallet.balance(&alice), 50);
         assert!(transfer_result.is_ok());
@@ -163,7 +140,7 @@ mod tests {
         let bob = "bob".to_string();
 
         pallet.set_balance(&alice, 100);
-        let transfer_result = pallet.transfer(&alice, &bob, 50);
+        let transfer_result = pallet.transfer(alice.clone(), bob.clone(), 50);
 
         assert_eq!(pallet.balance(&bob), 50);
         assert!(transfer_result.is_ok());

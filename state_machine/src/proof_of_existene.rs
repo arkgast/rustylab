@@ -1,14 +1,9 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
-use crate::{errors, support, system};
+use crate::{errors, system};
 
 pub trait Config: system::Config {
     type Content: Debug + Ord + Clone;
-}
-
-pub enum Call<T: Config> {
-    CreateClaim { claim: T::Content },
-    RevokeClaim { claim: T::Content },
 }
 
 #[derive(Debug)]
@@ -16,24 +11,33 @@ pub struct Pallet<T: Config> {
     claims: BTreeMap<T::Content, T::AccountId>,
 }
 
-impl<T: Config> support::Dispatch for Pallet<T> {
-    type Call = Call<T>;
-    type Caller = T::AccountId;
-    type Error = errors::ProofOfExistenceError;
-
-    fn dispatch(
+#[macros::call]
+impl<T: Config> Pallet<T> {
+    fn create_claim(
         &mut self,
-        caller: Self::Caller,
-        call: Self::Call,
-    ) -> support::DispatchResult<Self::Error> {
-        match call {
-            Call::CreateClaim { claim } => {
-                self.create_claim(&caller, &claim)?;
-            }
-            Call::RevokeClaim { claim } => {
-                self.revoke_claim(&caller, &claim)?;
-            }
+        caller: T::AccountId,
+        claim: T::Content,
+    ) -> Result<(), errors::ProofOfExistenceError> {
+        if self.get_claim(&claim).is_some() {
+            return Err(errors::ProofOfExistenceError::ClaimAlreadyExists);
         }
+        self.claims.insert(claim.clone(), caller.clone());
+        Ok(())
+    }
+
+    fn revoke_claim(
+        &mut self,
+        caller: T::AccountId,
+        claim: T::Content,
+    ) -> Result<(), errors::ProofOfExistenceError> {
+        let owner = self
+            .claims
+            .get(&claim)
+            .ok_or(errors::ProofOfExistenceError::ClaimNotFound)?;
+        if owner.clone() != caller {
+            return Err(errors::ProofOfExistenceError::NotOwner);
+        }
+        self.claims.remove(&claim);
         Ok(())
     }
 }
@@ -45,39 +49,11 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    fn create_claim(
-        &mut self,
-        caller: &T::AccountId,
-        claim: &T::Content,
-    ) -> Result<(), errors::ProofOfExistenceError> {
-        if self.get_claim(claim).is_some() {
-            return Err(errors::ProofOfExistenceError::ClaimAlreadyExists);
-        }
-        self.claims.insert(claim.clone(), caller.clone());
-        Ok(())
-    }
-
     fn get_claim(&self, content: &T::Content) -> Option<&T::AccountId> {
         if self.claims.contains_key(content) {
             return self.claims.get(content);
         }
         None
-    }
-
-    fn revoke_claim(
-        &mut self,
-        caller: &T::AccountId,
-        claim: &T::Content,
-    ) -> Result<(), errors::ProofOfExistenceError> {
-        let owner = self
-            .claims
-            .get(claim)
-            .ok_or(errors::ProofOfExistenceError::ClaimNotFound)?;
-        if owner != caller {
-            return Err(errors::ProofOfExistenceError::NotOwner);
-        }
-        self.claims.remove(claim);
-        Ok(())
     }
 }
 
@@ -105,7 +81,7 @@ mod test {
         let alice = String::from("alice");
         let content = &"content";
 
-        pallet.create_claim(&alice, &"content").unwrap();
+        pallet.create_claim(alice.clone(), "content").unwrap();
         assert_eq!(pallet.get_claim(content), Some(&alice));
     }
 
@@ -115,10 +91,10 @@ mod test {
         let alice = String::from("alice");
         let content = &"content";
 
-        pallet.create_claim(&alice, content).unwrap();
+        pallet.create_claim(alice.clone(), content).unwrap();
 
         assert_eq!(
-            pallet.create_claim(&alice, content).unwrap_err(),
+            pallet.create_claim(alice.clone(), content).unwrap_err(),
             errors::ProofOfExistenceError::ClaimAlreadyExists
         );
     }
@@ -128,7 +104,7 @@ mod test {
         let mut pallet = Pallet::<TestConfig>::new();
         let alice = String::from("alice");
         let content = &"content";
-        pallet.create_claim(&alice, content).unwrap();
+        pallet.create_claim(alice.clone(), content).unwrap();
         assert_eq!(pallet.get_claim(content).unwrap(), &alice);
     }
 
@@ -144,8 +120,8 @@ mod test {
         let alice = String::from("alice");
         let content = &"content";
 
-        pallet.create_claim(&alice, content).unwrap();
-        pallet.revoke_claim(&alice, content).unwrap();
+        pallet.create_claim(alice.clone(), content).unwrap();
+        pallet.revoke_claim(alice.clone(), content).unwrap();
 
         assert_eq!(pallet.get_claim(content), None);
     }
@@ -156,7 +132,7 @@ mod test {
         let alice = String::from("alice");
 
         assert_eq!(
-            pallet.revoke_claim(&alice, &"content").unwrap_err(),
+            pallet.revoke_claim(alice.clone(), "content").unwrap_err(),
             errors::ProofOfExistenceError::ClaimNotFound
         );
     }
@@ -166,12 +142,12 @@ mod test {
         let mut pallet = Pallet::<TestConfig>::new();
         let alice = String::from("alice");
         let bob = String::from("bob");
-        let content = &"content";
+        let content = "content";
 
-        pallet.create_claim(&alice, content).unwrap();
+        pallet.create_claim(alice.clone(), content).unwrap();
 
         assert_eq!(
-            pallet.revoke_claim(&bob, content).unwrap_err(),
+            pallet.revoke_claim(bob.clone(), content).unwrap_err(),
             errors::ProofOfExistenceError::NotOwner
         );
     }
@@ -182,9 +158,9 @@ mod test {
         let alice = String::from("alice");
         let content = &"content";
 
-        pallet.create_claim(&alice, content).unwrap();
-        pallet.revoke_claim(&alice, content).unwrap();
-        pallet.create_claim(&alice, content).unwrap();
+        pallet.create_claim(alice.clone(), content).unwrap();
+        pallet.revoke_claim(alice.clone(), content).unwrap();
+        pallet.create_claim(alice.clone(), content).unwrap();
 
         assert_eq!(pallet.get_claim(content), Some(&alice));
     }

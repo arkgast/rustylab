@@ -7,10 +7,29 @@ pub enum ProofOfExistenceError {
     NotOwner,
 }
 
+impl Display for ProofOfExistenceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProofOfExistenceError::NotOwner => write!(f, "not owner"),
+            ProofOfExistenceError::ClaimNotFound => write!(f, "claim not found"),
+            ProofOfExistenceError::ClaimAlreadyExists => write!(f, "claim already exists"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum SystemError {
     BlockNumberOverflow,
     NonceOverflow,
+}
+
+impl Display for SystemError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SystemError::NonceOverflow => write!(f, "nonce overflow"),
+            SystemError::BlockNumberOverflow => write!(f, "block number overflow"),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -23,7 +42,12 @@ pub enum TransferError {
 
 impl Display for TransferError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        match self {
+            TransferError::NotEnoughBalance => write!(f, "not enough balance"),
+            TransferError::BalanceOverflow => write!(f, "balance overflow"),
+            TransferError::CannotTransferToSelf => write!(f, "cannot transfer to self"),
+            TransferError::ZeroTransfer => write!(f, "zero transfer is not allowed"),
+        }
     }
 }
 
@@ -54,6 +78,10 @@ impl From<TransferError> for RuntimeError {
 
 impl Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        match self {
+            RuntimeError::System(err) => write!(f, "System error: {}", err),
+            RuntimeError::Transfer(err) => write!(f, "Transfer error: {}", err),
+            RuntimeError::ProofOfExistence(err) => write!(f, "PoE error: {}", err),
+        }
     }
 }
