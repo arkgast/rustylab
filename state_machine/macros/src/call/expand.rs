@@ -59,8 +59,9 @@ pub fn expand_call(def: CallDef) -> proc_macro2::TokenStream {
         impl<T: Config> crate::support::Dispatch for #pallet_struct<T> {
             type Caller = T::AccountId;
             type Call = Call<T>;
+            type Error = crate::errors::RuntimeError;
 
-            fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> crate::support::DispatchResult {
+            fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> crate::support::DispatchResult<Self::Error> {
                 match call {
                     #(
                         Call::#fn_name { #( #args_name ),* } => {
