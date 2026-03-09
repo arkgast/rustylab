@@ -1,6 +1,6 @@
 mod balances;
 mod errors;
-mod proof_of_existene;
+mod proof_of_existence;
 mod support;
 mod system;
 mod types;
@@ -12,7 +12,7 @@ use crate::support::Dispatch;
 pub struct Runtime {
     system: system::Pallet<Self>,
     balances: balances::Pallet<Self>,
-    proof_of_existene: proof_of_existene::Pallet<Self>,
+    proof_of_existence: proof_of_existence::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
@@ -25,7 +25,7 @@ impl balances::Config for Runtime {
     type Balance = types::Balance;
 }
 
-impl proof_of_existene::Config for Runtime {
+impl proof_of_existence::Config for Runtime {
     type Content = types::Content;
 }
 
@@ -56,13 +56,13 @@ fn main() {
             },
             types::Extrinsic {
                 caller: alice.clone(),
-                call: RuntimeCall::proof_of_existene(proof_of_existene::Call::create_claim {
+                call: RuntimeCall::proof_of_existence(proof_of_existence::Call::create_claim {
                     claim: content.clone(),
                 }),
             },
             types::Extrinsic {
                 caller: bob.clone(),
-                call: RuntimeCall::proof_of_existene(proof_of_existene::Call::create_claim {
+                call: RuntimeCall::proof_of_existence(proof_of_existence::Call::create_claim {
                     claim: content.clone(),
                 }),
             },
