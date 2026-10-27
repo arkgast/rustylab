@@ -18,8 +18,9 @@ Rubric, blockers and integrity rules: `curriculum/README.md`.
    ready", not a failed attempt.
 3. **Journal.** `journal/<ID>.md` must exist with the checkpoint answers. If it
    is missing or empty, stop and ask for it.
-4. **Read the code.** Read the learner's source for the task completely. Check
-   every acceptance criterion in the spec and every blocker in the rubric.
+4. **Read and run the code.** Read the learner's source for the task
+   completely and run `scripts/run.sh <ID>` to see its output. Check every
+   acceptance criterion in the spec and every blocker in the rubric.
    Run extra edge cases of your own (in the scratchpad, not the repo) if
    something looks suspicious.
 5. **Oral check.** Ask the three checkpoint questions, reworded or with a small
@@ -43,7 +44,8 @@ Rubric, blockers and integrity rules: `curriculum/README.md`.
 
 1. Verify all tasks of the stage are ✅.
 2. Present the exam text from the end of the stage spec. The learner works
-   closed-book in `tasks/src/s<n>_gate.rs` (create an empty file for them).
+   closed-book in `tasks/src/sNN_gate.rs` (create an empty file for them and
+   register it in `tasks/src/lib.rs`).
 3. Review the result with the same rubric, weighting Correctness and
    Explanation. Ask the oral questions drawn from the stage's checkpoints.
 4. Pass → `scripts/roadmap.py pass S<n>-GATE <SCORE>`. Fail → `fail`, and
@@ -54,3 +56,5 @@ Rubric, blockers and integrity rules: `curriculum/README.md`.
 - Do not fix the learner's code. Point, explain, and let them fix it.
 - Do not edit or weaken the fixed tests in `tasks/tests/`.
 - Be honest: a 79 is a fail. Say so kindly and precisely.
+- Phase I (Stages 1-4): do not ask for compiler error codes or failing
+  examples. Ask *why* the compiler accepted or rejected something.

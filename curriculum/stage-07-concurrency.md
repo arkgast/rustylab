@@ -1,155 +1,178 @@
 # Stage 7: Concurrency
 
-**Outcome:** You write data-race-free parallel code, explain why the compiler accepts it, and prove parallel execution equals sequential.
+**Phase:** II · Depth
+**Outcome:** You explain why a type is or is not `Send`/`Sync`, share state without deadlocks, build pipelines and worker pools that shut down cleanly, choose memory orderings deliberately, and parallelize work while keeping the result bit-for-bit deterministic.
 
-**Window:** 2026-12-30 → 2027-01-14 · tracker: [`ROADMAP.md`](../ROADMAP.md)
+Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
 
-Each task: read first, build in `tasks/` (or the crate named), write the journal entry, then run `/task-review <ID>`.
+## S7-T1 · Threads, scoped threads, Send & Sync
+*2 days (6 h)*
 
-## S7-T1 · Threads, move & Send/Sync
-*2 days (6 h) · due 2026-12-31*
-
-**Why it matters.** `Send` and `Sync` are marker traits that make data races a compile error.
-
-**Read first**
-- The Rust Book: Fearless Concurrency
-- Rustonomicon: Send and Sync
-
-**Build.** Parallel sum/word-count with `thread::spawn` + `move`, then with `thread::scope`; a demo that `Rc` is rejected across threads.
-
-**Acceptance criteria** (all required)
-- [ ] Results match sequential implementation on randomized inputs
-- [ ] 3 `compile_fail` doctests: Rc across threads, borrowed local in `spawn`, `Cell` shared by reference across threads
-- [ ] Journal explains each in terms of `Send` / `Sync` / `'static`
-
-**Stretch.** Implement `unsafe impl Send` on a wrapper and explain why it would be unsound.
-
-**Checkpoint questions** (answer in `journal/S7-T1.md`; the reviewer will ask them again)
-1. Define `Send` and `Sync` precisely and give a type that is `Send` but not `Sync`.
-2. Why does `thread::spawn` require `'static` and scoped threads don't?
-3. What happens to a panic in a spawned thread?
-
-## S7-T2 · Shared state: Mutex, RwLock, deadlocks
-*2 days (6 h) · due 2027-01-02*
-
-**Why it matters.** Shared mutable state is how most real bugs happen. Make the failure modes visible.
+**Why it matters.** "Fearless concurrency" is two marker traits plus ownership. Once you see that a data race is a compile error, not a heisenbug, you can parallelize validators and executors with confidence.
 
 **Read first**
-- The Rust Book: Shared-State Concurrency
-- Rust Atomics and Locks: ch. 1 Mutexes
+- The Rust Book ch. 16.1 (Using Threads) and 16.4 (Extensible Concurrency with Send and Sync)
+- Rust Atomics and Locks (Mara Bos) ch. 1 (Basics of Rust Concurrency)
+- The Rustonomicon: "Send and Sync"
 
-**Build.** A concurrent `Bank` with `Arc<Mutex<..>>` per account; a transfer that deadlocks with naive locking; the fix with lock ordering; an `RwLock` read-heavy variant; contention measurement.
+**Lesson** (`scripts/run.sh S7-T1 learn`)
+- `thread::spawn` needs `'static + Send` and `move`; `JoinHandle<T>` returns results and panics
+- `thread::scope`: borrow stack data from threads without `Arc`; naive "Arc + clone everything" vs scoped borrow side by side
+- `Send` vs `Sync`; why `Rc` is `!Send` (non-atomic count), `RefCell` is `!Sync`, `MutexGuard` is `!Send`; auto traits and `PhantomData`
+
+**Build.** `tasks/src/s07/t01_threads.rs`: `parallel_sum(&[u64], threads) -> Result<u128, SumError>` with `thread::scope`; `parallel_map<T, U>(Vec<T>, f) -> Vec<U>` preserving order; `chunked_hash_count(&[Vec<u8>]) -> usize`; plus `compile_fail` doctests showing `Rc` cannot cross `thread::spawn` (E0277) and a borrowed slice cannot go into `thread::spawn` (E0373).
+
+**Run.** `scripts/run.sh S7-T1` prints per-thread chunks and timings.
 
 **Acceptance criteria** (all required)
-- [ ] A test that reliably demonstrates the deadlock (with timeout) and one that passes after the fix
-- [ ] Total money conserved under 8 threads and 100k random transfers
-- [ ] Handles lock poisoning explicitly
-- [ ] Journal: coarse vs fine-grained locking numbers
+- [ ] All tests in `tasks/tests/s07_t01.rs` pass
+- [ ] No `Arc` where `thread::scope` suffices; no `unsafe impl Send`
+- [ ] A panicking worker yields a typed error, not a process abort
+- [ ] Two `compile_fail` doctests with error codes and rule/fix comments
+- [ ] `parallel_sum` result equals the sequential sum for empty, 1-element and odd-length inputs
 
-**Stretch.** Replace per-account Mutex with sharded locks and compare.
+**Stretch.** Write a type with a raw pointer field, show it is `!Send`, and explain in the journal what you would need to prove to `unsafe impl Send` (do not ship it).
 
-**Checkpoint questions** (answer in `journal/S7-T2.md`; the reviewer will ask them again)
-1. What is lock poisoning and what should you do about it?
-2. Why does consistent lock ordering prevent deadlock?
+**Checkpoint questions** (answer in `journal/S7-T1.md`; the reviewer asks them again)
+1. Why is `Rc<T>` `!Send` while `Arc<T>` is `Send` (given `T: Send + Sync`)?
+2. Why does `thread::spawn` require `'static`, and how does `thread::scope` remove that requirement soundly?
+3. `T: Sync` is defined as `&T: Send`. Explain that definition with an example.
+
+## S7-T2 · Shared state: Arc, Mutex, RwLock & deadlocks
+*2 days (6 h)*
+
+**Why it matters.** Mempools, caches and peer tables are shared across threads. Locks are easy to use and easy to misuse: hold one too long and throughput dies; take two in different orders and the node hangs.
+
+**Read first**
+- The Rust Book ch. 16.3 (Shared-State Concurrency)
+- Rust Atomics and Locks ch. 1 (sections on Mutex, RwLock, poisoning, condvars)
+- std docs: `Mutex::lock`, `PoisonError::into_inner`, `RwLock`, `Condvar`
+
+**Lesson** (`scripts/run.sh S7-T2 learn`)
+- `Arc<Mutex<T>>`: the guard as RAII; holding a guard across slow work vs copying out and releasing
+- Deadlock live: two threads, two locks, opposite order (with a timeout in the demo); fix with a global lock order
+- Poisoning: what it means, recovering with `into_inner` vs propagating as an error; `RwLock` and writer starvation
+
+**Build.** `tasks/src/s07/t02_shared_state.rs`: `Bank { accounts: Vec<Mutex<Account>> }` with `transfer(from, to, amount)` that locks in ascending id order and handles `from == to`; `Mempool` behind `RwLock` (`insert`, `contains`, `drain_by_fee`); `Counter` with poisoning mapped to `Err(Poisoned)`; a stress test with 8 threads x 10 000 random transfers.
+
+**Run.** `scripts/run.sh S7-T2` runs the stress test and prints total supply before and after.
+
+**Acceptance criteria** (all required)
+- [ ] All tests in `tasks/tests/s07_t02.rs` pass, including the stress test under `--release`
+- [ ] Locks always acquired in a documented global order; journal draws the order
+- [ ] No `lock().unwrap()` in library code; poisoning is a typed error
+- [ ] No guard held across I/O, sleep or a user callback
+- [ ] Total supply is conserved after the stress test
+
+**Stretch.** Replace `Vec<Mutex<Account>>` with one `Mutex<Vec<Account>>`, benchmark both under contention, and explain the result.
+
+**Checkpoint questions** (answer in `journal/S7-T2.md`; the reviewer asks them again)
+1. State the four Coffman conditions and which one your lock ordering breaks.
+2. Why does Rust poison a mutex, and when is `into_inner` the right recovery?
 3. When is `RwLock` slower than `Mutex`?
 
 ## S7-T3 · Channels & worker pools
-*2 days (6 h) · due 2027-01-05*
+*2 days (6 h)*
 
-**Why it matters.** Message passing moves ownership across threads and is the natural fit for pipelines.
-
-**Read first**
-- std docs: `mpsc`
-- `crossbeam-channel` docs
-
-**Build.** A pipeline: producer → N workers → collector, with bounded channels for back-pressure and graceful shutdown on drop.
-
-**Acceptance criteria** (all required)
-- [ ] No busy-waiting; shutdown by closing channels
-- [ ] Order of results documented (unordered or re-sequenced)
-- [ ] A test that a slow consumer blocks the producer (back-pressure)
-- [ ] All threads joined in `Drop`
-
-**Stretch.** Add a `crossbeam` select with timeout.
-
-**Checkpoint questions** (answer in `journal/S7-T3.md`; the reviewer will ask them again)
-1. Why does closing the sender end the receiver loop?
-2. Bounded vs unbounded: what failure does each choose?
-3. How does sending a value relate to moving it?
-
-## S7-T4 · Rayon & atomics
-*2 days (6 h) · due 2027-01-07*
-
-**Why it matters.** Data parallelism is the easiest speedup; atomics are the primitives under every lock.
+**Why it matters.** Message passing replaces shared state with ownership transfer. Nodes are pipelines: network -> decode -> verify signatures -> execute -> persist. A worker pool that cannot shut down cleanly loses transactions on restart.
 
 **Read first**
-- `rayon` docs
-- Rust Atomics and Locks: ch. 2-3
+- The Rust Book ch. 16.2 (Using Message Passing) and ch. 21.2-21.3 (thread pool and graceful shutdown)
+- crossbeam-channel docs: `bounded`, `select!`, `never`, disconnection semantics
+- Rust Atomics and Locks ch. 5 (Building Our Own Channels), read for ideas
 
-**Build.** Parallel hash verification of 100k items with `par_iter`; an `AtomicU64` counter; a spinlock built from `AtomicBool` with correct orderings.
+**Lesson** (`scripts/run.sh S7-T3 learn`)
+- `mpsc` unbounded vs `sync_channel(n)` bounded: backpressure, and memory growth when the consumer is slow
+- Disconnection as the shutdown signal: drop all senders, `recv` returns `Err`, workers exit
+- crossbeam `select!` across a work channel and a shutdown channel; fan-out / fan-in
+
+**Build.** `tasks/src/s07/t03_channels.rs`: `ThreadPool::new(n) -> Result<Self, PoolError>`, `execute(job) -> Result<(), PoolError>`, `shutdown(self) -> Vec<JobReport>` and a `Drop` that joins all workers; a 3-stage pipeline `parse -> verify -> apply` over bounded channels that preserves input order in the final output.
+
+**Run.** `scripts/run.sh S7-T3` prints jobs per worker and the shutdown sequence.
 
 **Acceptance criteria** (all required)
-- [ ] Speedup measured at 1/2/4/8 threads, with Amdahl's-law commentary
-- [ ] Spinlock tested with 8 threads for mutual exclusion
-- [ ] Journal justifies each `Ordering` used (Relaxed/Acquire/Release/SeqCst)
+- [ ] All tests in `tasks/tests/s07_t03.rs` pass
+- [ ] Every job submitted before `shutdown` runs exactly once; jobs after shutdown return `Err`
+- [ ] A panicking job does not kill its worker or the pool
+- [ ] Pipeline channels are bounded; journal states the chosen capacity and why
+- [ ] No detached threads: every `JoinHandle` is joined
 
-**Stretch.** Run the spinlock under `loom`.
+**Stretch.** Swap `std::sync::mpsc` for crossbeam and add a `shutdown_timeout(Duration)` using `select!` on a deadline.
 
-**Checkpoint questions** (answer in `journal/S7-T4.md`; the reviewer will ask them again)
-1. What does `Acquire`/`Release` establish that `Relaxed` does not?
-2. Why is `par_iter().sum()` deterministic for integers but not floats?
-3. What is false sharing?
+**Checkpoint questions** (answer in `journal/S7-T3.md`; the reviewer asks them again)
+1. Why is an unbounded channel a memory leak waiting for a slow consumer?
+2. How does dropping senders shut the pool down, and what must happen to the receiver for that to work?
+3. When would you choose channels over `Arc<Mutex<_>>`, and vice versa?
 
-## S7-T5 · Async basics
-*2 days (6 h) · due 2027-01-09*
+## S7-T4 · Atomics, memory ordering & rayon
+*2 days (6 h)*
 
-**Why it matters.** Async is cooperative concurrency for IO-bound work. You need the vocabulary even when a runtime hides it.
+**Why it matters.** Atomics are the floor every lock and channel is built on. Get `Ordering` wrong and code passes tests on x86 and fails on ARM. Rayon is the safe, high-level path that most parallel chain code actually uses.
 
 **Read first**
-- The Async Book (intro chapters)
-- `tokio` tutorial
+- Rust Atomics and Locks ch. 2 (Atomics), ch. 3 (Memory Ordering), ch. 4 (Building Our Own Spin Lock)
+- rayon docs: `par_iter`, `join`, `ThreadPoolBuilder`; "Rayon: data parallelism in Rust" (Niko Matsakis)
 
-**Build.** A tokio TCP line-echo server with a timeout and a shared counter, plus a hand-written `Future` (a countdown that wakes itself).
+**Lesson** (`scripts/run.sh S7-T4 learn`)
+- `fetch_add`, `compare_exchange` loops; `Relaxed` for counters, `Release`/`Acquire` for publishing data, `SeqCst` and when it is really needed
+- A spinlock: `AtomicBool` + `UnsafeCell<T>` + guard; why `lock` needs `Acquire` and `unlock` needs `Release`
+- rayon: sequential loop vs `par_iter().map().sum()` vs manual threads; work stealing; `reduce` needs associativity
+
+**Build.** `tasks/src/s07/t04_atomics.rs`: `StatsCounter` (Relaxed counters, snapshot), `OnceFlag` publishing a value with Release/Acquire, `SpinLock<T>` with an RAII guard (the one place `unsafe` is allowed this stage, every block with a `// SAFETY:` comment), and `par_verify(&[Tx]) -> Vec<Result<(), VerifyError>>` with rayon preserving order.
+
+**Run.** `scripts/run.sh S7-T4`; `cargo +nightly miri test -p tasks --test s07_t04` if Miri is installed.
 
 **Acceptance criteria** (all required)
-- [ ] Server handles 100 concurrent clients in a test
-- [ ] Hand-written `Future` implements `poll` correctly with a waker
-- [ ] Journal: async vs threads, where each wins
-- [ ] No blocking calls inside async fns (justify)
+- [ ] All tests in `tasks/tests/s07_t04.rs` pass, including an 8-thread spinlock stress test
+- [ ] Every `Ordering` choice has a one-line justification comment
+- [ ] Every `unsafe` block has a `// SAFETY:` comment stating the invariant
+- [ ] `SpinLock<T>` is `Sync` only when `T: Send`
+- [ ] `par_verify` output is identical to sequential output
 
-**Stretch.** Use `tokio::select!` with cancellation and explain cancel-safety.
+**Stretch.** Use `loom` to model-check `OnceFlag` and report what it finds if you weaken Release to Relaxed.
 
-**Checkpoint questions** (answer in `journal/S7-T5.md`; the reviewer will ask them again)
-1. What does `.await` compile to?
-2. Why must async code not block the executor thread?
-3. What is `Pin` protecting?
+**Checkpoint questions** (answer in `journal/S7-T4.md`; the reviewer asks them again)
+1. What does a Release store followed by an Acquire load of the same value guarantee about other memory?
+2. Why is `Relaxed` fine for a statistics counter but wrong for a "data ready" flag?
+3. Why must the operation in a rayon `reduce` be associative, and what breaks if it is not?
 
-## S7-T6 · Capstone: deterministic parallel executor
-*3 days (9 h) · due 2027-01-13*
+## S7-T5 · Capstone: deterministic parallel transaction executor
+*3 days (9 h)*
 
-**Why it matters.** Blockchains need parallelism without nondeterminism. The result must equal sequential execution bit for bit.
+**Why it matters.** Every validator must reach the same state from the same block. Solana's Sealevel parallelizes by requiring transactions to declare their read/write account sets up front; Aptos/Sui's Block-STM executes optimistically and re-runs on conflict. Both must produce exactly the state sequential execution would. That is your test oracle.
 
 **Read first**
-- Read about Block-STM and Solana's Sealevel at overview level
+- Solana docs: "Sealevel: parallel processing of smart contracts" (blog) and the account-locking section of the runtime docs
+- Block-STM paper (Gelashvili et al., 2022): sections 1-3
+- Re-read your S7-T2, S7-T3, S7-T4 journals
 
-**Build.** Partition transactions into conflict-free groups by read/write account sets and execute groups in parallel with Rayon; fall back to sequential for conflicts.
+**Lesson** (`scripts/run.sh S7-T5 learn`)
+- Read/write sets and conflicts: W-W and R-W on the same key; building non-conflicting batches greedily in block order
+- Determinism traps: `HashMap` iteration order, thread-completion order, floats, wall-clock time
+- State root: hash a `BTreeMap` canonically; compare sequential vs parallel roots as the core test
+
+**Build.** `tasks/src/s07/t05_parallel_exec.rs`: `Tx { id, reads: BTreeSet<Key>, writes: BTreeSet<Key>, op }`, `schedule(&[Tx]) -> Vec<Batch>` (conflict-free batches preserving relative order of conflicting txs), `execute_sequential(&State, &[Tx]) -> Result<(State, Receipts), ExecError>`, `execute_parallel(&State, &[Tx], threads) -> Result<(State, Receipts), ExecError>` using rayon or scoped threads, and `state_root(&State) -> [u8; 32]`. ADR in `docs/adr/` on scheduling strategy.
+
+**Run.** `scripts/run.sh S7-T5` prints batches, speedup and both state roots.
 
 **Acceptance criteria** (all required)
-- [ ] Property test: parallel result equals sequential for 1000 random blocks
-- [ ] Conflict detection documented and tested (same account, read-after-write)
-- [ ] Speedup benchmark on non-conflicting workloads
-- [ ] Journal: why the result is deterministic despite scheduling
+- [ ] All tests in `tasks/tests/s07_t05.rs` pass
+- [ ] A proptest over random tx sets asserts parallel root == sequential root and equal receipts
+- [ ] A tx touching a key outside its declared sets is rejected with a typed error, not silently run
+- [ ] No `HashMap`/`HashSet` in state or scheduling; checked arithmetic everywhere
+- [ ] Speedup measured on a low-conflict and a high-conflict workload; numbers in the journal
+- [ ] ADR written
 
-**Stretch.** Implement optimistic execution with re-execution on conflict.
+**Stretch.** Implement a minimal optimistic executor (Block-STM-lite): run all txs in parallel against a snapshot, detect read-set invalidation, re-execute in order, and compare speedup with your scheduler.
 
-**Checkpoint questions** (answer in `journal/S7-T6.md`; the reviewer will ask them again)
-1. What makes the outcome independent of thread scheduling?
-2. What is the cost of getting conflict detection wrong?
-3. Where could nondeterminism still leak in (logs, maps, time)?
+**Checkpoint questions** (answer in `journal/S7-T5.md`; the reviewer asks them again)
+1. Why is "same state root as sequential execution" the right correctness definition?
+2. Sealevel vs Block-STM: what does each require from transactions, and what does each do on conflict?
+3. Name two places nondeterminism could leak into your executor and how you closed each.
 
-## S7-GATE · Stage gate
-*1 day (3 h) · due 2027-01-14*
+## S7-GATE · Stage 7 gate: closed-book exam + catch-up
+*1 day (3 h)*
 
-**Exam.** Closed book, 90 min: implement a worker pool with channels and graceful shutdown; explain `Send`/`Sync` and a deadlock you can cause and fix.
+**Exam.** Closed book, 90 min, blank file `tasks/src/s07_gate.rs`: write `parallel_word_count(&[&str], threads) -> BTreeMap<String, u64>` with `thread::scope` and a channel fan-in, equal to the sequential result; a `Bank::transfer` over `Vec<Mutex<u64>>` that cannot deadlock (with a short justification); and an `AtomicU64` ID generator with a justified `Ordering`. Explain in writing why a given snippet using `Rc` across threads fails to compile. Then answer 5 oral questions drawn from the S7 checkpoints.
 
-**Pass criteria.** Exam solved without notes or AI help, compiles, tests pass, and all oral answers are correct or corrected with a clear explanation. Remaining time: fix weak spots flagged by the reviewer and re-read failed checkpoints.
+**Pass criteria.** Solved without notes or AI, compiles, tests pass, no deadlock in a 4-thread stress run, oral answers correct or corrected with a clear explanation. Remaining time: redo the weakest task's core from a blank file.

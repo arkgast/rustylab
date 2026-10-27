@@ -4,14 +4,17 @@
 - Hours spent:
 
 ## What I built
-(2-4 sentences. Public API and the key design decision.)
+(2-4 sentences: the public API and the one design decision that mattered.)
+
+## What surprised me when I ran it
+(Output you did not predict, and why it was actually right.)
 
 ## What broke
-(Compiler errors or bugs that cost me time. Quote the error, say what the
-compiler was actually telling me, and the fix.)
+(The compiler error or bug that cost you the most time: what the compiler was
+really telling you, and the fix.)
 
 ## Concepts, in my own words
-(Explain without jargon you could not define. Draw the stack/heap if useful.)
+(No jargon you could not define. Draw the stack and heap if it helps.)
 
 ## Checkpoint answers
 1.

@@ -1,83 +1,71 @@
 # RustyLab
 
-A structured, deadline-driven path from Rust fundamentals to protocol
-engineering.
+A structured, deadline-driven path from re-learning Rust to senior Rust
+engineering, and from there to blockchain engineering on **Polkadot, Solana
+and Stellar**.
 
-This is not a pile of random exercises. It is a deliberate deep dive into the
-mechanics that make Rust suited to high-assurance systems such as blockchain
-infrastructure: the goal is to understand *why* Rust enforces its constraints
-and how they rule out whole classes of bugs.
+Every concept is learned the same way: read a little, **run a lesson and watch
+its output**, solve katas and run them, pass the gate, explain your answers.
 
 ## The plan at a glance
 
-- **10 stages, 50 tasks**, plus a closed-book exam at the end of every stage
-- **3 focused hours per day, Monday to Saturday**; Sunday is spaced repetition
-- **~375 study hours** in about 21 weeks (see [`ROADMAP.md`](ROADMAP.md) for dates)
-- Every task has **acceptance criteria, fixed tests, a journal entry and an
-  oral review**. A task is done only when the review passes.
+- **17 stages, 83 tasks, 5 phases**, plus a closed-book exam at the end of every stage
+- **3 focused hours a day, Monday to Saturday**; Sunday is spaced repetition
+- **189 study days (~567 h)**; dates and progress are in [`ROADMAP.md`](ROADMAP.md)
+- A task is done only when its review passes: automated gate, rubric ≥ 80, oral check
 
-| # | Stage | You will be able to... |
-|---|-------|------------------------|
-| 1 | Foundations | predict borrow-checker outcomes; model failure with `Option`/`Result` |
-| 2 | Types & traits | make invalid states unrepresentable; choose generics vs `dyn` |
-| 3 | Lifetimes & memory | reason about where data lives and for how long |
-| 4 | Error design | design error APIs; audit for panics; make operations atomic |
-| 5 | Collections & iterators | pick deterministic collections; write lazy pipelines |
-| 6 | Testing & correctness | specify invariants; property-test against a model; benchmark |
-| 7 | Concurrency | write race-free parallel code; prove parallel equals sequential |
-| 8 | Macros | read and write declarative and procedural macros |
-| 9 | State machines | build deterministic transitions with commit/rollback |
-| 10 | Protocol engineering | build hashing, Merkle proofs, signatures, codec, consensus, gossip; map to FRAME |
-
-## Learning method
-
-Each task follows the same loop: **concept → example → build → journal →
-review**. Every day is 20 min recall, 30 min concept, 100 min build, 20 min
-self-review, 10 min journal. Full rules, rubric and integrity policy:
-[`curriculum/README.md`](curriculum/README.md).
+| Phase | Stage | You will be able to... |
+|-------|-------|------------------------|
+| I · Fluency | 1 Rust refresh | write basic programs from memory; see moves and borrows |
+| | 2 Collections, closures & iterators | process data with pipelines; pick deterministic collections |
+| | 3 Error handling | design typed errors; never panic on bad input |
+| | 4 Traits & generics | model domains with traits, newtypes and associated types |
+| II · Depth | 5 Lifetimes & memory | reason about where data lives and for how long |
+| | 6 Crates, API design & testing | ship library-quality APIs with property tests and benchmarks |
+| | 7 Concurrency | write race-free parallel code; prove parallel equals sequential |
+| | 8 Async | build tokio services with timeouts, cancellation and backpressure |
+| | 9 Macros | read and write declarative and procedural macros |
+| III · Systems | 10 Unsafe, no_std & WASM | write sound unsafe code; run sandboxed WASM contracts |
+| | 11 Encoding & cryptography | build canonical codecs, Merkle proofs and signed transactions |
+| IV · Protocol | 12 A runtime from scratch | build a deterministic blockchain runtime end to end |
+| | 13 Execution models & security | exploit and fix the classic smart-contract bugs; audit your own code |
+| V · Chains | 14 Polkadot SDK | write, test, benchmark and migrate FRAME pallets |
+| | 15 Solana | write native and Anchor programs; test them with LiteSVM / Mollusk |
+| | 16 Stellar & Soroban | write and deploy Soroban contracts |
+| | 17 Senior capstone | read production chain code, contribute upstream, defend a final project |
 
 ## How to work a task
 
 ```sh
 python3 scripts/roadmap.py status     # what is next and whether you are late
 # in Claude Code:
-/start-task S1-T1                     # scaffold, theory, example
-# edit tasks/src/s01/t01_ownership.rs, write journal/S1-T1.md
-scripts/gate.sh S1-T1                 # automated gate: fmt, clippy, tests, doctests
+/start-task S1-T1                     # theory + a runnable lesson
+scripts/run.sh S1-T1 learn            # run the lesson, tweak it, run again
+# replace the todo!()s in tasks/src/s01/t01_basics.rs
+scripts/run.sh S1-T1                  # see your katas' results (⏳ = not done yet)
+scripts/gate.sh S1-T1                 # fmt, clippy, tests, runner builds
+# write journal/S1-T1.md
 /task-review S1-T1                    # rubric + oral check; updates the roadmap on pass
 ```
+
+`scripts/run.sh playground` runs `tasks/examples/playground.rs`, your scratch
+file for experiments.
+
+Full rules, rubric and integrity policy: [`curriculum/README.md`](curriculum/README.md).
 
 ## Repository layout
 
 | Path | What it is |
 |------|------------|
 | `ROADMAP.md` | Tracker: status, due dates, scores (updated only by reviews) |
-| `curriculum/` | Task specs per stage and the rules of the game |
-| `tasks/` | Your exercises (`src/`) and the fixed gate tests (`tests/`) |
+| `curriculum/` | Stage specs and the rules of the game |
+| `tasks/` | Your exercises (`src/`), runners and lessons (`examples/`), fixed gate tests (`tests/`) |
+| `labs/` | Separate crates for later stages (async, macros, WASM, runtime, chains) |
 | `journal/` | Your notes and checkpoint answers per task |
-| `state_machine/` | Mini blockchain runtime with pallets, reused in later stages |
-| `state_machine/macros/` | Procedural macros that generate dispatch code |
-| `guessing_game/`, `calculator/` | Early reference programs |
-| `scripts/` | `gate.sh` and `roadmap.py` |
-| `docs/adr/` | Design decisions you write along the way |
+| `scripts/` | `run.sh`, `gate.sh`, `roadmap.py` |
+| `docs/` | ADRs, audits and write-ups you produce along the way |
 
-## Getting started
-
-```sh
-cargo test -p state_machine            # the runtime you will keep extending
-cargo run -p state_machine
-scripts/gate.sh S1-T1                  # fails until you implement the stubs: that is the point
-```
+Earlier experiments (`calculator`, `guessing_game`, `state_machine`) are
+archived on branch `archive/legacy-projects`.
 
 Rust toolchain: 1.89 (edition 2024).
-
-## Why this matters
-
-Blockchain infrastructure demands determinism, memory safety, concurrency
-control, and explicit state transitions. Rust provides these guarantees through
-constraints, and RustyLab explores those constraints directly.
-
-## Long-term direction
-
-Moving from application-level Rust to infrastructure-grade Rust suitable for
-blockchain runtimes and protocol-level systems (`no_std`, Substrate / FRAME).

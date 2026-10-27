@@ -1,7 +1,7 @@
-//! Stage 1: Foundations.
+//! Stage 1: Rust refresh.
 
-pub mod t01_ownership;
-pub mod t02_slices;
-pub mod t03_option_result;
-pub mod t04_patterns;
-pub mod t05_kvstore;
+pub mod t01_basics;
+pub mod t02_structs_enums;
+pub mod t03_ownership;
+pub mod t04_borrowing;
+pub mod t05_ledger;

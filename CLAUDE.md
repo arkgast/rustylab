@@ -1,10 +1,12 @@
 # CLAUDE.md
 
-RustyLab is a learning repo. The goal is to take the owner from Rust basics to
-protocol / blockchain-runtime engineering. **Teaching is the primary job; shipping
-code is secondary.** The owner learns best by studying theory and then practicing.
+RustyLab is a learning repo with one purpose: take the owner, an engineer
+re-learning Rust, to senior Rust and then to blockchain engineering on
+Polkadot, Solana and Stellar. **Teaching is the primary job; shipping code is
+secondary.** The owner learns best by studying a concept, **running code and
+seeing the output**, then practicing.
 
-The plan is a 50-task, 10-stage roadmap at **3 hours per day, Monday to
+The plan: 83 tasks in 17 stages and 5 phases, at **3 hours per day, Monday to
 Saturday**, with deadlines, review gates and automatic slip tracking.
 
 ## Source of truth
@@ -12,24 +14,30 @@ Saturday**, with deadlines, review gates and automatic slip tracking.
 | File | Role |
 |------|------|
 | `ROADMAP.md` | Status, due dates, scores. **Never edit by hand**; only `scripts/roadmap.py` writes it. |
-| `curriculum/stage-XX-*.md` | Task specs: why, reading, deliverable, acceptance criteria, checkpoint questions, stage exam. |
-| `curriculum/README.md` | Daily schedule, rubric, blockers, integrity and slip rules. |
-| `tasks/src/sNN/` | The learner's code, one stub file per task. |
+| `curriculum/stage-NN-*.md` | Task specs: why, reading, lesson, katas, acceptance criteria, checkpoint questions, stage exam. Headings are parsed by `roadmap.py init`. |
+| `curriculum/README.md` | Phases, learning loop, daily schedule, rubric, blockers, integrity and slip rules. |
+| `tasks/src/sNN/tMM_*.rs` | The learner's code, one stub file per task. |
+| `tasks/examples/sNN_tMM.rs` | Runner: prints every kata's result (`scripts/run.sh <ID>`). |
+| `tasks/examples/sNN_tMM_learn.rs` | Lesson: runnable, written by `/start-task` (`scripts/run.sh <ID> learn`). |
 | `tasks/tests/sNN_tMM.rs` | Fixed gate tests. **Never edit, weaken or skip them.** |
+| `labs/<slug>/` | Separate crates for tasks that need their own deps, target or toolchain (Stage 6 on). |
 | `journal/<ID>.md` | The learner's notes and checkpoint answers (template: `journal/TEMPLATE.md`). |
 
 ## Workflow commands
 
 ```sh
 python3 scripts/roadmap.py status        # what is due next, how late
-scripts/gate.sh S1-T3                    # automated gate: fmt, clippy, tests, doctests
+scripts/run.sh S1-T1 learn               # run the lesson
+scripts/run.sh S1-T1                     # run the katas, see results (⏳ = todo!())
+scripts/run.sh playground                # scratch space (tasks/examples/playground.rs)
+scripts/gate.sh S1-T1                    # fmt, clippy, fixed tests, own tests, doctests, runner builds
 ```
 
 Skills (slash commands):
 
-- `/start-task <ID>`: check prerequisites, scaffold stubs and fixed tests if
-  missing (proved satisfiable against a scratchpad reference solution), mark 🔨,
-  teach the concept with an example. Does **not** write the solution.
+- `/start-task <ID>`: check prerequisites, scaffold stub, runner and fixed
+  tests if missing (proved fair against a scratchpad reference solution),
+  write the runnable lesson, mark 🔨, teach. Does **not** write the solution.
 - `/task-review <ID>`: automated gate, code review against the rubric, oral
   checkpoint questions, then `scripts/roadmap.py pass|fail`. The roadmap
   changes **only** through this path.
@@ -40,14 +48,23 @@ Break work into small steps. After **each** step, before moving on, deliver:
 
 1. **Concept**: 3-8 lines of theory. Why the concept exists, what problem it
    solves, and what Rust enforces (compiler rule, invariant, or guarantee).
-2. **Example**: a minimal, runnable snippet. Prefer one that fails to compile
-   first, then the fix, when the lesson is a compiler constraint.
+2. **Example**: a minimal, **runnable** program that prints what it does. Put
+   it in the task's lesson file or the playground so the owner can run it.
+   Show the **idiomatic version and the naive/brute-force version side by
+   side**, and say why the idiom wins.
 3. **Link to protocol work**: one sentence on where this shows up in
-   blockchain runtimes (e.g. determinism, state transitions, no panics).
+   blockchain runtimes (determinism, state transitions, no panics, ...).
 4. **Practice**: a small exercise the owner does themselves. Do not solve it
    unless asked. Offer a hint ladder: question, concept pointer, similar
    snippet, then solution.
 5. **Checkpoint**: one question that tests understanding, not syntax.
+
+Phase rules:
+- **Phase I (Stages 1-4)**: fluency first. Never require writing failing
+  examples or naming compiler error codes. A commented-out broken line to
+  try is fine.
+- **Phase II+ (Stage 5 on)**: `compile_fail` doctests with error codes and
+  ADRs (`docs/adr/`) become normal tools.
 
 Rules:
 - Do not dump a finished solution for a learning task. Guide, then review.
@@ -55,8 +72,8 @@ Rules:
   first, then idiom, then performance. Explain *why*, not just *what*.
 - If the owner says they need assistance, switch to direct help for that step
   and note in the review that the explanation points must be re-earned.
-- Keep terminal explanations short; long-form notes go in module docs (`//!`),
-  `journal/`, or `docs/`.
+- Keep terminal explanations short; long-form notes go in lesson files,
+  module docs (`//!`), `journal/`, or `docs/`.
 - Name the Rust term precisely (move, borrow, reborrow, trait object, ...) so
   vocabulary compounds.
 - Be honest in reviews: 79 is a fail. Say so kindly and precisely.
@@ -70,60 +87,67 @@ library code, `clone`/`Rc`/`unsafe`/`'static` added only to silence the
 compiler, tests tampered with, code the learner cannot explain.
 
 A late finish or failed review slips all later unfinished rows by the same
-number of study days; this is automatic in `scripts/roadmap.py`.
+number of study days; `scripts/roadmap.py` does this automatically.
 
 ## Curriculum
 
-Ten stages, basics to protocol engineering. Details, dates and tasks are in
-`ROADMAP.md` and `curriculum/`.
+| Phase | Stages |
+|-------|--------|
+| I · Fluency | 1 Rust refresh · 2 Collections, closures & iterators · 3 Error handling · 4 Traits & generics |
+| II · Depth | 5 Lifetimes & memory · 6 Crates, API design & testing · 7 Concurrency · 8 Async · 9 Macros |
+| III · Systems | 10 Unsafe, no_std & WASM · 11 Encoding & cryptography |
+| IV · Protocol | 12 A runtime from scratch · 13 Execution models & security |
+| V · Chains | 14 Polkadot SDK · 15 Solana · 16 Stellar & Soroban · 17 Senior capstone |
 
-1. Foundations  2. Types & traits  3. Lifetimes & memory  4. Error design
-5. Collections & iterators  6. Testing & correctness  7. Concurrency
-8. Macros  9. State machines  10. Protocol engineering
+Stage 1 is fully scaffolded. Later tasks are scaffolded just in time by
+`/start-task`, so the tests reflect what has been taught and dependency
+versions are current. To change the plan, edit the stage specs and, only while
+no row has progress, rebuild with `python3 scripts/roadmap.py init <START>`.
 
-Stage 1 is fully scaffolded. Later stages are scaffolded just in time by
-`/start-task` so tests reflect what has actually been taught.
+The earlier projects (`calculator`, `guessing_game`, `state_machine`) are
+archived on branch `archive/legacy-projects`. Do not restore them; Stage 12
+rebuilds a better runtime from scratch.
 
 ## Repo map
 
 | Path | Purpose |
 |------|---------|
-| `guessing_game/`, `calculator/` | Early reference programs (Stages 1-2 material) |
-| `state_machine/` | Mini runtime with pallets; reused by Stages 4, 6, 8, 9 tasks |
-| `state_machine/macros/` | Proc macros: `call!` and `runtime!` (Stage 8) |
-| `tasks/` | Guided exercises with fixed gate tests (workspace member) |
+| `tasks/` | Guided exercises: `src/` stubs, `examples/` runners and lessons, `tests/` fixed gates |
+| `tasks/src/lab.rs` | `kata()` and `show!` helpers for runners |
+| `labs/` | Per-task crates created by `/start-task` (async, macros, wasm, runtime, chains) |
 | `curriculum/`, `ROADMAP.md`, `journal/` | The plan, the tracker, the learner's notes |
-| `scripts/` | `gate.sh`, `roadmap.py` |
-| `docs/adr/` | Architecture decision records written during tasks |
+| `scripts/` | `run.sh`, `gate.sh`, `roadmap.py` |
+| `docs/` | ADRs, audits and write-ups produced during tasks |
 
 ## Commands
 
 ```sh
 cargo build --workspace
-cargo test --workspace            # note: tasks stubs fail until implemented
+cargo test --workspace            # note: task stubs fail until implemented
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all
-cargo run -p state_machine
 ```
 
 Toolchain: Rust 1.89 (pinned by a rustup directory override on
-`~/Projects/Rust`). Anything run outside that tree needs `cargo +1.89.0`.
+`~/Projects/Rust`). Anything run outside that tree needs `cargo +1.89.0`. Chain
+labs may pin their own toolchain with a `rust-toolchain.toml`.
 
 ## Code conventions
 
 - Edition 2024, workspace resolver 3.
 - No `unwrap()` / `expect()` / indexing that can panic in non-test code. Model
-  failures with `Result` and typed errors (`thiserror`).
+  failures with `Result` and typed errors (`thiserror` from Stage 3).
 - Use checked / saturating arithmetic for balances and counters; never rely on
   overflow behavior. No floats in state-transition code.
 - Prefer `BTreeMap` over `HashMap` where iteration order can affect state.
-- Every module gets tests that assert invariants, not only happy paths.
+- Tests assert invariants and failure paths, not only happy paths.
 - Comments explain *why* and tradeoffs, not what the code already says.
 - Small commits, conventional style (`feat(scope): ...`, `fix(scope): ...`).
   Do not commit unless asked.
 
 ## Definition of done for a learning step
 
-Compiles, `fmt` and `clippy -D warnings` clean, gate tests pass, journal
-written, and the learner can explain in their own words why the compiler
-accepted it. The roadmap is updated by the review, never before.
+Compiles, `fmt` and `clippy -D warnings` clean, gate tests pass, the runner
+shows the expected output, the journal is written, and the learner can explain
+in their own words why the compiler accepted it. The roadmap is updated by the
+review, never before.

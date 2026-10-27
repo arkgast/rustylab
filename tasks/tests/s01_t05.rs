@@ -1,140 +1,216 @@
 //! Gate for S1-T5. Do not edit.
-use tasks::s01::t05_kvstore::*;
+mod common;
 
-const SRC: &str = include_str!("../src/s01/t05_kvstore.rs");
+use tasks::s01::t05_ledger::*;
 
-fn run(store: &mut Store, line: &str) -> Result<Output, ExecError> {
-    store.execute(Command::parse(line).expect("parse"))
+const SRC: &str = include_str!("../src/s01/t05_ledger.rs");
+
+fn s(x: &str) -> String {
+    x.to_string()
+}
+
+fn run(ledger: &mut Ledger, line: &str) -> Result<Outcome, LedgerError> {
+    let cmd = Command::parse(line).unwrap_or_else(|e| panic!("{line:?} should parse: {e:?}"));
+    ledger.execute(cmd)
+}
+
+fn funded() -> Ledger {
+    let mut l = Ledger::new();
+    for line in ["open alice", "open bob", "deposit alice 100"] {
+        run(&mut l, line).expect("setup");
+    }
+    l
 }
 
 #[test]
-fn parse_commands_case_insensitive() {
+fn parses_every_command() {
+    assert_eq!(Command::parse("open alice"), Ok(Command::Open(s("alice"))));
     assert_eq!(
-        Command::parse("set a 1"),
-        Ok(Command::Set {
-            key: "a".into(),
-            value: "1".into()
+        Command::parse("  deposit   alice  100 "),
+        Ok(Command::Deposit {
+            account: s("alice"),
+            amount: 100
         })
     );
     assert_eq!(
-        Command::parse("GET a"),
-        Ok(Command::Get { key: "a".into() })
+        Command::parse("withdraw bob 7"),
+        Ok(Command::Withdraw {
+            account: s("bob"),
+            amount: 7
+        })
     );
     assert_eq!(
-        Command::parse("  Del   a "),
-        Ok(Command::Del { key: "a".into() })
+        Command::parse("transfer alice bob 18446744073709551615"),
+        Ok(Command::Transfer {
+            from: s("alice"),
+            to: s("bob"),
+            amount: u64::MAX
+        })
     );
     assert_eq!(
-        Command::parse("incr a"),
-        Ok(Command::Incr { key: "a".into() })
+        Command::parse("balance\tbob"),
+        Ok(Command::Balance(s("bob")))
     );
 }
 
 #[test]
 fn parse_errors() {
     assert_eq!(Command::parse(""), Err(ParseError::Empty));
-    assert_eq!(Command::parse("   "), Err(ParseError::Empty));
+    assert_eq!(Command::parse("  \t "), Err(ParseError::Empty));
     assert_eq!(
-        Command::parse("FLY a"),
-        Err(ParseError::UnknownCommand("FLY".into()))
+        Command::parse("steal alice"),
+        Err(ParseError::UnknownCommand(s("steal")))
     );
     assert_eq!(
-        Command::parse("SET a"),
-        Err(ParseError::WrongArity {
-            command: "SET",
-            expected: 2,
-            got: 1
-        })
+        Command::parse("OPEN alice"),
+        Err(ParseError::UnknownCommand(s("OPEN")))
     );
     assert_eq!(
-        Command::parse("get"),
-        Err(ParseError::WrongArity {
-            command: "GET",
+        Command::parse("open"),
+        Err(ParseError::WrongArgCount {
             expected: 1,
-            got: 0
+            found: 0
         })
     );
     assert_eq!(
-        Command::parse("DEL a b"),
-        Err(ParseError::WrongArity {
-            command: "DEL",
+        Command::parse("transfer alice bob"),
+        Err(ParseError::WrongArgCount {
+            expected: 3,
+            found: 2
+        })
+    );
+    assert_eq!(
+        Command::parse("balance a b"),
+        Err(ParseError::WrongArgCount {
             expected: 1,
-            got: 2
+            found: 2
         })
     );
+    for bad in ["ten", "-5", "0", "1.5", "18446744073709551616"] {
+        assert_eq!(
+            Command::parse(&format!("deposit alice {bad}")),
+            Err(ParseError::BadAmount(s(bad))),
+            "amount {bad:?}"
+        );
+    }
 }
 
 #[test]
-fn set_get_del() {
-    let mut s = Store::new();
-    assert!(s.is_empty());
-    assert_eq!(run(&mut s, "SET a hello"), Ok(Output::Ok));
+fn happy_path() {
+    let mut l = Ledger::new();
+    assert_eq!(run(&mut l, "open alice"), Ok(Outcome::Opened));
+    assert_eq!(run(&mut l, "open bob"), Ok(Outcome::Opened));
+    assert_eq!(run(&mut l, "deposit alice 100"), Ok(Outcome::Balance(100)));
+    assert_eq!(run(&mut l, "withdraw alice 30"), Ok(Outcome::Balance(70)));
     assert_eq!(
-        run(&mut s, "GET a"),
-        Ok(Output::Value(Some("hello".into())))
+        run(&mut l, "transfer alice bob 50"),
+        Ok(Outcome::Transferred { from: 20, to: 50 })
     );
-    assert_eq!(run(&mut s, "GET b"), Ok(Output::Value(None)));
-    assert_eq!(s.len(), 1);
-    assert_eq!(run(&mut s, "DEL a"), Ok(Output::Deleted(true)));
-    assert_eq!(run(&mut s, "DEL a"), Ok(Output::Deleted(false)));
-    assert!(s.is_empty());
+    assert_eq!(run(&mut l, "balance bob"), Ok(Outcome::Balance(50)));
+    assert_eq!(l.balance_of("alice"), Some(20));
+    assert_eq!(l.balance_of("carol"), None);
 }
 
 #[test]
-fn incr() {
-    let mut s = Store::new();
-    assert_eq!(run(&mut s, "INCR n"), Ok(Output::Int(1)));
-    assert_eq!(run(&mut s, "INCR n"), Ok(Output::Int(2)));
-    assert_eq!(run(&mut s, "SET n -5"), Ok(Output::Ok));
-    assert_eq!(run(&mut s, "INCR n"), Ok(Output::Int(-4)));
-    assert_eq!(run(&mut s, "GET n"), Ok(Output::Value(Some("-4".into()))));
-}
-
-#[test]
-fn incr_errors_leave_store_unchanged() {
-    let mut s = Store::new();
-    run(&mut s, "SET word abc").unwrap();
+fn failures_are_typed() {
+    let mut l = funded();
     assert_eq!(
-        run(&mut s, "INCR word"),
-        Err(ExecError::NotAnInteger { key: "word".into() })
+        run(&mut l, "open alice"),
+        Err(LedgerError::AccountExists(s("alice")))
     );
     assert_eq!(
-        run(&mut s, "GET word"),
-        Ok(Output::Value(Some("abc".into())))
-    );
-
-    run(&mut s, &format!("SET big {}", i64::MAX)).unwrap();
-    assert_eq!(
-        run(&mut s, "INCR big"),
-        Err(ExecError::Overflow { key: "big".into() })
+        run(&mut l, "deposit carol 1"),
+        Err(LedgerError::UnknownAccount(s("carol")))
     );
     assert_eq!(
-        run(&mut s, "GET big"),
-        Ok(Output::Value(Some(i64::MAX.to_string())))
+        run(&mut l, "balance carol"),
+        Err(LedgerError::UnknownAccount(s("carol")))
     );
-    assert_eq!(s.len(), 2);
-}
-
-#[test]
-fn author_wrote_their_own_tests() {
-    let n = SRC.matches("#[test]").count();
-    assert!(
-        n >= 5,
-        "add at least 5 #[test]s in t05_kvstore.rs (found {n})"
+    assert_eq!(
+        run(&mut l, "withdraw alice 101"),
+        Err(LedgerError::InsufficientFunds {
+            needed: 101,
+            available: 100
+        })
+    );
+    assert_eq!(
+        run(&mut l, "transfer alice alice 1"),
+        Err(LedgerError::SameAccount)
+    );
+    assert_eq!(
+        run(&mut l, "transfer alice carol 1"),
+        Err(LedgerError::UnknownAccount(s("carol")))
+    );
+    assert_eq!(
+        run(&mut l, "transfer carol alice 1"),
+        Err(LedgerError::UnknownAccount(s("carol")))
     );
 }
 
 #[test]
-fn no_panicking_shortcuts() {
-    // Only inspect the code before the author's test module.
-    let code = SRC.split("#[cfg(test)]").next().unwrap_or(SRC);
-    for line in code.lines() {
-        let t = line.trim_start();
-        if t.starts_with("//") {
-            continue;
-        }
-        for banned in ["unwrap(", "expect(", "panic!", "todo!", "unimplemented!"] {
-            assert!(!t.contains(banned), "`{banned}` found in: {t}");
+fn overflow_is_an_error() {
+    let mut l = funded();
+    assert_eq!(
+        run(&mut l, "deposit alice 18446744073709551615"),
+        Err(LedgerError::Overflow)
+    );
+    run(&mut l, "deposit bob 18446744073709551615").expect("bob can hold u64::MAX");
+    assert_eq!(
+        run(&mut l, "transfer alice bob 1"),
+        Err(LedgerError::Overflow)
+    );
+}
+
+#[test]
+fn failed_commands_leave_state_unchanged() {
+    let mut l = funded();
+    run(&mut l, "deposit bob 18446744073709551600").expect("setup");
+    let before = l.clone();
+    let failing = [
+        "open bob",
+        "deposit nobody 5",
+        "withdraw alice 1000",
+        "transfer alice bob 50",
+        "transfer alice alice 1",
+        "transfer alice nobody 1",
+        "transfer nobody alice 1",
+        "transfer alice bob 101",
+    ];
+    for line in failing {
+        assert!(run(&mut l, line).is_err(), "{line:?} should fail");
+        assert_eq!(l, before, "{line:?} changed the ledger");
+    }
+}
+
+#[test]
+fn rule_no_panicking_shortcuts() {
+    for banned in [".unwrap()", ".expect(", "panic!", "unreachable!", "todo!"] {
+        common::assert_absent(SRC, banned, "return a typed error instead");
+    }
+}
+
+#[test]
+fn rule_no_indexing() {
+    for (n, line) in common::code_lines(SRC) {
+        let b = line.as_bytes();
+        for i in 1..b.len() {
+            let before = b[i - 1];
+            let is_index = b[i] == b'['
+                && (before.is_ascii_alphanumeric() || matches!(before, b'_' | b')' | b']'));
+            assert!(
+                !is_index,
+                "line {n}: indexing can panic, use .get() or iterators:\n    {}",
+                line.trim()
+            );
         }
     }
+}
+
+#[test]
+fn rule_own_tests() {
+    let n = common::count_tests(SRC);
+    assert!(
+        n >= 5,
+        "write at least 5 #[test]s in the source file, found {n}"
+    );
 }

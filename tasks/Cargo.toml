@@ -2,7 +2,8 @@
 name = "tasks"
 version = "0.1.0"
 edition = "2024"
+publish = false
 
+# Dependencies are added just in time by `/start-task`, when a stage first
+# needs them (thiserror and anyhow in Stage 3, proptest in Stage 6, ...).
 [dependencies]
-thiserror = "2.0.21"
-serde = "1.0.229"

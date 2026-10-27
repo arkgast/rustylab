@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Automated review gate for a RustyLab task.
 #   scripts/gate.sh S1-T3
-# Runs fmt, clippy and the task's fixed tests. Exit 0 = automated gate green.
+# Runs fmt, clippy, the task's fixed tests, its own unit tests and doctests,
+# and checks that the runner (`scripts/run.sh <ID>`) builds. Exit 0 = green.
 # The roadmap is NOT updated here: only `/task-review` does that after the
 # human-style review (rubric + checkpoint questions).
 set -euo pipefail
@@ -33,9 +34,15 @@ cargo clippy -p tasks --all-targets -- -D warnings
 step "cargo test ${test_target} (fixed gate tests)"
 cargo test -p tasks --test "${test_target}"
 
-mod=$(ls "tasks/src/s${stage}/" | grep -E "^t${task}_" | head -1 | sed 's/\.rs$//')
+mod=$(find "tasks/src/s${stage}" -maxdepth 1 -name "t${task}_*.rs" -exec basename {} .rs \; | head -1)
+step "your own unit tests in ${mod}"
+cargo test -p tasks --lib -- "s${stage}::${mod}"
+
 step "doc tests for ${mod}"
 cargo test -p tasks --doc -- "${mod}"
+
+step "runner builds (scripts/run.sh ${id})"
+cargo build -q -p tasks --example "${test_target}"
 
 printf '\n\033[32m✔ automated gate green for %s\033[0m\n' "$id"
 echo "Next: write journal/${id}.md, then run /task-review ${id}"
