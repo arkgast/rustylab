@@ -3,7 +3,7 @@
 #   scripts/gate.sh S1-T3
 # Runs fmt, clippy, the task's fixed tests, its own unit tests and doctests,
 # and checks that the runner (`scripts/run.sh <ID>`) builds. Exit 0 = green.
-# The roadmap is NOT updated here: only `/task-review` does that after the
+# The roadmap is NOT updated here: only `/review` does that after the
 # human-style review (rubric + checkpoint questions).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -19,7 +19,7 @@ test_target="s${stage}_t${task}"
 
 if [[ ! -f "tasks/tests/${test_target}.rs" ]]; then
   echo "No gate tests for ${id} yet (tasks/tests/${test_target}.rs missing)." >&2
-  echo "Later-stage tasks are scaffolded when you reach them: ask for '/start-task ${id}'." >&2
+  echo "Later-stage tasks are scaffolded when you reach them: ask for '/study ${id}'." >&2
   exit 3
 fi
 
@@ -45,4 +45,4 @@ step "runner builds (scripts/run.sh ${id})"
 cargo build -q -p tasks --example "${test_target}"
 
 printf '\n\033[32m✔ automated gate green for %s\033[0m\n' "$id"
-echo "Next: write journal/${id}.md, then run /task-review ${id}"
+echo "Next: write journal/${id}.md, then run /review ${id}"
