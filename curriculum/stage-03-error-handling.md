@@ -3,22 +3,22 @@
 **Phase:** I · Fluency
 **Outcome:** You model every failure as a typed value, chain fallible steps with combinators and `?`, design error enums that carry context and a source chain, and know exactly when a panic is acceptable and when it is a bug.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S3-T1 · Option & Result combinators
 *1 day (3 h)*
 
 **Why it matters.** Most error-handling code is plumbing: turn a missing value into an error, convert one error into another, chain steps that may fail. Combinators make that plumbing short and explicit, and a runtime that never panics is built from them.
 
-**Read first**
-- The Rust Book ch. 9 (Error Handling)
-- std docs: `Option` and `Result` method lists, especially `ok_or`, `ok_or_else`, `map`, `map_err`, `and_then`, `unwrap_or`, `unwrap_or_default`, `transpose`, `ok`, `filter`, `zip`
-- Rust by Example: "Error handling" (`?`, "Iterating over Results")
-
-**Lesson** (`scripts/run.sh S3-T1 learn`)
+**Probes**
 - `match` version vs combinator version vs `?` version of the same function, printed side by side
 - `?` on `Option` and on `Result`; why you cannot mix them in one function without `ok_or`
 - `transpose`: `Option<Result<T, E>>` to `Result<Option<T>, E>` and when it appears (optional fields)
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 9 (Error Handling)
+- std docs: `Option` and `Result` method lists, especially `ok_or`, `ok_or_else`, `map`, `map_err`, `and_then`, `unwrap_or`, `unwrap_or_default`, `transpose`, `ok`, `filter`, `zip`
+- Rust by Example: "Error handling" (`?`, "Iterating over Results")
 
 **Build.** `tasks/src/s03/t01_combinators.rs`: eight katas:
 - `parse_port(s: &str) -> Option<u16>` (`ok`, `filter` to reject 0)
@@ -50,15 +50,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** A caller can only react to an error it can match on. Hand-writing `Display`, `Error` and `From` once shows you exactly what derive crates generate later, and source chains let a failure deep in decoding still explain itself at the top.
 
-**Read first**
-- The Rust Book ch. 9.2 ("Propagating Errors", "The `?` operator")
-- std docs: `std::error::Error` (`source`), `std::fmt::Display`, `From`, `std::num::ParseIntError`
-- Rust by Example: "Defining an error type", "Wrapping errors"
-
-**Lesson** (`scripts/run.sh S3-T2 learn`)
+**Probes**
 - An error is just an enum: variants carry the data needed to act (account, line, needed vs available)
 - `impl Display` for humans, `impl Error` with `source()` for the chain, `impl From<Inner>` so `?` converts
 - Walking a source chain with a `while let Some(src)` loop and printing each level
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 9.2 ("Propagating Errors", "The `?` operator")
+- std docs: `std::error::Error` (`source`), `std::fmt::Display`, `From`, `std::num::ParseIntError`
+- Rust by Example: "Defining an error type", "Wrapping errors"
 
 **Build.** `tasks/src/s03/t02_custom_errors.rs`, with no external crates:
 - `ParseTxError { MissingField(&'static str), BadAmount(ParseIntError), Empty }` with `Display`, `Error` (`source` returns the inner `ParseIntError`) and `From<ParseIntError>`
@@ -89,15 +89,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Libraries owe callers matchable, typed errors; binaries owe users a clear message and an exit code. Choosing the right tool for each side, and having a written panic policy, is what separates a robust node from one an attacker can crash with a malformed input.
 
-**Read first**
-- `thiserror` README and docs (`#[error]`, `#[from]`, `#[source]`, `#[error(transparent)]`)
-- `anyhow` docs (`anyhow::Result`, `Context`, `bail!`, `ensure!`)
-- The Rust Book ch. 9.3 ("To `panic!` or Not to `panic!`")
-
-**Lesson** (`scripts/run.sh S3-T3 learn`)
+**Probes**
 - Your S3-T2 hand-written errors next to the `thiserror` version: same behavior, fewer lines
 - `anyhow` in `main`: `.context("reading config")`, printing the chain with `{:#}` and `{:?}`
 - Panic policy: panics are for broken invariants (bugs), never for bad input; `debug_assert!` vs `assert!`; `std::process::ExitCode`
+
+**Reference** (read after the probes, or when stuck)
+- `thiserror` README and docs (`#[error]`, `#[from]`, `#[source]`, `#[error(transparent)]`)
+- `anyhow` docs (`anyhow::Result`, `Context`, `bail!`, `ensure!`)
+- The Rust Book ch. 9.3 ("To `panic!` or Not to `panic!`")
 
 **Build.** `tasks/src/s03/t03_thiserror_anyhow.rs` and the runner `tasks/examples/s03_t03.rs`:
 - Port `ParseTxError`, `ExecError`, `TxError` from S3-T2 to `thiserror` (`#[from]`, `#[source]`)
@@ -127,14 +127,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** A block importer must reject bad input without crashing and say exactly what was wrong. Collecting every error instead of stopping at the first is how good validators, linters and compilers behave, and it is what you want when someone submits a batch.
 
-**Read first**
-- Re-read your S3-T1..T3 journals
-- std docs: `str::lines` with `enumerate`, `Iterator::partition`, `std::process::ExitCode`
-
-**Lesson** (`scripts/run.sh S3-T4 learn`)
+**Probes**
 - Fail-fast (`?`, `collect::<Result<_, _>>`) vs collect-all (`partition`, a `Vec<LineError>`): when each is right
 - Two phases: syntactic validation per line, then semantic validation against state (unknown accounts, balances, nonces)
 - Mapping error categories to exit codes and a stable human report
+
+**Reference** (read after the probes, or when stuck)
+- Re-read your S3-T1..T3 journals
+- std docs: `str::lines` with `enumerate`, `Iterator::partition`, `std::process::ExitCode`
 
 **Build.** `tasks/src/s03/t04_validator.rs`: input lines `nonce,from,to,amount` (blank lines and `#` comments allowed).
 - `LineError { line: usize, kind: LineErrorKind }` via `thiserror`; kinds: field count, bad number, zero amount, self-transfer, nonce gap, unknown account, insufficient funds, overflow

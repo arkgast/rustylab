@@ -3,21 +3,21 @@
 **Phase:** I · Fluency
 **Outcome:** You design small trait-based APIs: you choose between generics and trait objects for a reason, use associated types and std conversion traits idiomatically, wrap primitives in newtypes so the compiler catches unit mix-ups, and write a Substrate-style `Config` trait that a runtime is generic over.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S4-T1 · Traits, default methods & std derives
 *1 day (3 h)*
 
 **Why it matters.** Traits are Rust's unit of abstraction. The std derives are contracts, not decorations: if `Ord` or `Hash` disagrees with `Eq`, a `BTreeMap` or `HashSet` silently misbehaves, and in a runtime that means corrupted state.
 
-**Read first**
-- The Rust Book ch. 10.2 (Traits), Appendix C (Derivable Traits)
-- std docs: `PartialEq`/`Eq`, `PartialOrd`/`Ord` (read the "consistency" requirements), `Hash` (the `k1 == k2 -> hash(k1) == hash(k2)` rule), `Default`, `Debug`, `Display`
-
-**Lesson** (`scripts/run.sh S4-T1 learn`)
+**Probes**
 - Defining a trait, required vs default methods, implementing it for your types and for std types
 - What each derive generates; derived `Ord` compares fields in declaration order (field order is API)
 - Manual `PartialEq`/`Ord`/`Hash` that must agree: a broken impl next to a correct one, with a `BTreeSet` printout showing the damage
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 10.2 (Traits), Appendix C (Derivable Traits)
+- std docs: `PartialEq`/`Eq`, `PartialOrd`/`Ord` (read the "consistency" requirements), `Hash` (the `k1 == k2 -> hash(k1) == hash(k2)` rule), `Default`, `Debug`, `Display`
 
 **Build.** `tasks/src/s04/t01_traits.rs`: seven katas:
 - `trait Describe { fn name(&self) -> String; fn describe(&self) -> String { /* default uses name */ } }` for `Account` and `Validator`, overriding the default in one
@@ -48,14 +48,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Generics let one function serve many types at zero runtime cost: the compiler stamps out a copy per concrete type. Bounds are the contract that makes this safe. FRAME pallets are generic over a `Config`, so this is daily work later.
 
-**Read first**
-- The Rust Book ch. 10.1 (Generic Data Types), ch. 10.2 ("Traits as Parameters", "Trait Bound Syntax", `where` clauses)
-- std docs: `std::cmp::Ord`, `std::ops::Add`, `std::iter::Sum`; Rust Reference "Trait and lifetime bounds"
-
-**Lesson** (`scripts/run.sh S4-T2 learn`)
+**Probes**
 - `fn f<T: Bound>`, `impl Trait` in argument position, `where` clauses: same thing, different readability
 - Monomorphization: one copy per type; `cargo build` then `nm`/`cargo asm` (optional) to see two instances
 - Generic structs and `impl<T: Bound> Struct<T>`; conditional methods only for some `T`; blanket impls
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 10.1 (Generic Data Types), ch. 10.2 ("Traits as Parameters", "Trait Bound Syntax", `where` clauses)
+- std docs: `std::cmp::Ord`, `std::ops::Add`, `std::iter::Sum`; Rust Reference "Trait and lifetime bounds"
 
 **Build.** `tasks/src/s04/t02_generics.rs`: seven katas:
 - `largest<T: PartialOrd + Copy>(xs: &[T]) -> Option<T>`
@@ -86,15 +86,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Sometimes you need a heterogeneous list: different transaction handlers, different hook implementations, chosen at runtime. `dyn Trait` gives you that through a vtable. Knowing the cost and the dyn-compatibility rules tells you when to reach for it.
 
-**Read first**
-- The Rust Book ch. 18.2 (Using Trait Objects That Allow for Values of Different Types)
-- Rust Reference: "Trait objects" and "Dyn compatibility" (formerly "object safety")
-- std docs: `Box`, `std::any::Any` (skim)
-
-**Lesson** (`scripts/run.sh S4-T3 learn`)
+**Probes**
 - `&dyn Trait` and `Box<dyn Trait>`: fat pointers (data + vtable); print `size_of` for `&T` vs `&dyn Trait`
 - Static vs dynamic dispatch side by side: `fn run<H: Handler>(h: &H)` vs `fn run(h: &dyn Handler)`
 - Dyn compatibility: why generic methods or `-> Self` break it, and the `where Self: Sized` escape hatch
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 18.2 (Using Trait Objects That Allow for Values of Different Types)
+- Rust Reference: "Trait objects" and "Dyn compatibility" (formerly "object safety")
+- std docs: `Box`, `std::any::Any` (skim)
 
 **Build.** `tasks/src/s04/t03_trait_objects.rs`: six katas:
 - `trait Handler { fn name(&self) -> &str; fn handle(&mut self, tx: &Tx) -> Result<(), HandlerError>; }` with `FeeCollector`, `NonceChecker` and `Logger` implementations
@@ -124,15 +124,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Associated types make traits like `Iterator` and FRAME's `Config` readable. Operator traits and std conversions (`From`, `TryFrom`, `FromStr`, `AsRef`) are how your types plug into the language: `?`, `parse`, `+`, `into()` all work through them.
 
-**Read first**
-- The Rust Book ch. 20.2 (Advanced Traits: associated types, default type parameters, operator overloading)
-- std docs: `std::ops` (`Add`, `Sub`, `AddAssign`, `Neg`, `Index`), `From`/`Into`, `TryFrom`/`TryInto`, `FromStr`, `AsRef`, `Borrow` (skim)
-- Rust API Guidelines: "Conversions" (C-CONV-TRAITS, C-CONV)
-
-**Lesson** (`scripts/run.sh S4-T4 learn`)
+**Probes**
 - Associated type vs generic parameter: one impl per type (`Iterator::Item`) vs many (`From<T>`); the rule of thumb
 - Operator overloading with `Add<Output = ...>`; when `+` should not exist (overflowing money)
 - `From` (infallible) vs `TryFrom` (fallible) vs `FromStr` (from text); implement `From` and get `Into` free; `AsRef<str>` to accept many string-like inputs
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 20.2 (Advanced Traits: associated types, default type parameters, operator overloading)
+- std docs: `std::ops` (`Add`, `Sub`, `AddAssign`, `Neg`, `Index`), `From`/`Into`, `TryFrom`/`TryInto`, `FromStr`, `AsRef`, `Borrow` (skim)
+- Rust API Guidelines: "Conversions" (C-CONV-TRAITS, C-CONV)
 
 **Build.** `tasks/src/s04/t04_assoc_ops_conversions.rs`:
 - Day 1: `trait Container { type Item; fn get(&self, i: usize) -> Option<&Self::Item>; fn first(&self) -> Option<&Self::Item>; fn len(&self) -> usize; }` for `MyVec<T>` and `Bytes`; `trait Storage { type Key: Ord; type Value; ... }` with an in-memory `BTreeMap` impl; `Vec2 { x: i64, y: i64 }` with `Add`, `Sub`, `Neg`, `AddAssign` and `Mul<i64>`
@@ -159,15 +159,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** `u64` balances, `u64` nonces and `u64` block numbers are interchangeable to the compiler; newtypes make mixing them a type error. Floats are nondeterministic across platforms in edge cases and lose precision, so chains use fixed-point integers with checked math.
 
-**Read first**
-- The Rust Book ch. 20.3 ("Using the Newtype Pattern"), Rust API Guidelines C-NEWTYPE
-- std docs: `u128::checked_mul`, `checked_div`, `checked_sub`, `saturating_sub`
-- Skim: `sp_arithmetic::FixedU128` docs (how Substrate represents 18-decimal fixed point)
-
-**Lesson** (`scripts/run.sh S4-T5 learn`)
+**Probes**
 - Newtypes: zero cost, new trait impls, hiding invariants behind a constructor
 - Why `0.1 + 0.2 != 0.3`, printed; fixed-point as an integer scaled by `10^18`
 - Rounding direction is a policy: round down for what the user receives, up for what they pay
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 20.3 ("Using the Newtype Pattern"), Rust API Guidelines C-NEWTYPE
+- std docs: `u128::checked_mul`, `checked_div`, `checked_sub`, `saturating_sub`
+- Skim: `sp_arithmetic::FixedU128` docs (how Substrate represents 18-decimal fixed point)
 
 **Build.** `tasks/src/s04/t05_newtypes_fixed.rs`:
 - `AccountId(u32)`, `Nonce(u64)`, `BlockNumber(u64)` with only the operations that make sense (`Nonce::next`, `BlockNumber::checked_add`)
@@ -196,15 +196,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Substrate's `frame_system::Config` makes a whole runtime generic over its account, balance and block-number types. Building a miniature version shows how associated types, bounds, newtypes and checked math combine into an API where swapping a type is one line.
 
-**Read first**
-- Re-read your S4-T1..T5 journals
-- Polkadot SDK docs: `frame_system::Config` (skim the associated types list), "Pallet coupling" overview
-- Optional, after you finish: the archived mini runtime on branch `archive/legacy-projects` (`git show archive/legacy-projects:state_machine/src/system.rs`), to compare with your design
-
-**Lesson** (`scripts/run.sh S4-T6 learn`)
+**Probes**
 - `trait Config { type AccountId: Ord + Clone + Debug; type Balance: ...; type BlockNumber: ...; }`: bounds as the contract
 - `struct System<T: Config>` and `struct Balances<T: Config>`: `T::AccountId` everywhere, no concrete types
 - Supertraits and helper traits (`trait Zero`, `trait CheckedMath`) instead of depending on external crates
+
+**Reference** (read after the probes, or when stuck)
+- Re-read your S4-T1..T5 journals
+- Polkadot SDK docs: `frame_system::Config` (skim the associated types list), "Pallet coupling" overview
+- Optional, after you finish: the archived mini runtime on branch `archive/legacy-projects` (`git show archive/legacy-projects:state_machine/src/system.rs`), to compare with your design
 
 **Build.** `tasks/src/s04/t06_config_runtime.rs`:
 - `trait Config` with `AccountId`, `Balance`, `BlockNumber` (and a `const EXISTENTIAL_DEPOSIT`)

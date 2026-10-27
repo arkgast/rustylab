@@ -3,22 +3,22 @@
 **Phase:** II · Depth
 **Outcome:** You explain what `.await` compiles to, write a future and an executor by hand, build tokio services that time out, cancel and shut down cleanly under load, and you know which code must never run on an async worker thread.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S8-T1 · Futures, Poll & Waker: a hand-written executor
 *2 days (6 h)*
 
 **Why it matters.** Async is a state machine the compiler writes for you, driven by a runtime you did not write. Until you write both once, `Pin`, `Send` bounds on futures and "my task never wakes up" are magic. Every node's networking layer sits on this.
 
-**Read first**
-- Asynchronous Programming in Rust (the Async Book): "Under the Hood" chapters (Future trait, Wakers, Executors, Pinning)
-- std docs: `std::future::Future`, `std::task::{Poll, Context, Waker, Wake}`, `std::pin::Pin`
-- "Pin" (without.boats blog) or the `std::pin` module docs, sections on structural pinning
-
-**Lesson** (`scripts/run.sh S8-T1 learn`)
+**Probes**
 - `async fn` desugared: an enum state machine with one variant per `.await`; why it may be self-referential and therefore needs `Pin`
 - `poll` returns `Ready` or `Pending`; the contract: return `Pending` only after arranging a wake; a busy-loop "executor" vs a waker-driven one, CPU usage printed
 - `Wake` trait + `Arc<Task>` + a channel = a minimal executor; `block_on` with a thread-park waker
+
+**Reference** (read after the probes, or when stuck)
+- Asynchronous Programming in Rust (the Async Book): "Under the Hood" chapters (Future trait, Wakers, Executors, Pinning)
+- std docs: `std::future::Future`, `std::task::{Poll, Context, Waker, Wake}`, `std::pin::Pin`
+- "Pin" (without.boats blog) or the `std::pin` module docs, sections on structural pinning
 
 **Build.** `tasks/src/s08/t01_futures.rs` (std only, no tokio): `Countdown` future that is `Pending` n times and wakes itself; `TimerFuture` that a helper thread completes; `block_on<F: Future>(f) -> F::Output`; `MiniExecutor` with `spawn` and `run` over a channel of `Arc<Task>`; `join2(a, b)` combinator written by hand.
 
@@ -43,15 +43,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Polkadot, Solana and Stellar nodes and their RPC services run on tokio. Spawning, timing out and collecting tasks correctly is daily work, and one blocking call on a runtime thread stalls every peer connection on it.
 
-**Read first**
-- tokio tutorial: "Hello Tokio", "Spawning", "Shared state", "Channels", "I/O", "Framing"
-- tokio docs: `task::JoinSet`, `time::timeout`, `task::spawn_blocking`, `sync::Semaphore`
-- Alice Ryhl: "Async: What is blocking?"
-
-**Lesson** (`scripts/run.sh S8-T2 learn`)
+**Probes**
 - `#[tokio::main]`, multi-thread vs current-thread runtime; `tokio::spawn` needs `Send + 'static`, and holding a `std::sync::MutexGuard` across `.await` makes a future `!Send`
 - Blocking the executor live: `std::thread::sleep` vs `tokio::time::sleep` in 100 tasks, timings printed; `spawn_blocking` for CPU work
 - `JoinSet` to collect results and abort the rest; `timeout` wrapping any future; `Semaphore` to cap concurrency
+
+**Reference** (read after the probes, or when stuck)
+- tokio tutorial: "Hello Tokio", "Spawning", "Shared state", "Channels", "I/O", "Framing"
+- tokio docs: `task::JoinSet`, `time::timeout`, `task::spawn_blocking`, `sync::Semaphore`
+- Alice Ryhl: "Async: What is blocking?"
 
 **Build.** `labs/async-lab/` (binary crate with tokio, tokio-util): `echo-server` on `TcpListener` with per-connection tasks and line framing; `fetch_all(addrs, max_in_flight) -> Vec<Result<Response, FetchError>>` with `JoinSet`, `Semaphore` and a per-request `timeout`; a `hash_blocks` endpoint that offloads hashing with `spawn_blocking`.
 
@@ -76,15 +76,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** In async Rust, cancellation is dropping a future at any `.await`. If that drop loses a half-read message or a popped transaction, the node silently drops data. Graceful shutdown is how a validator restarts without corrupting state.
 
-**Read first**
-- tokio tutorial: "Select", "Graceful Shutdown"
-- tokio docs: `select!` (cancellation safety section), `sync::mpsc::channel` (bounded), `tokio_util::sync::CancellationToken`, `task::TaskTracker`
-- "Cancelling async Rust" (sunshowers / Rain, RustConf 2024 talk or blog)
-
-**Lesson** (`scripts/run.sh S8-T3 learn`)
+**Probes**
 - `select!` drops the losing branches: a cancel-unsafe loop (`read_exact` inside `select!`) losing bytes vs the safe version (persistent buffer / framed stream)
 - `CancellationToken` + `TaskTracker`: signal, stop accepting, drain in-flight, wait with a deadline
 - Backpressure: bounded `mpsc` and `send().await` vs `try_send` with an explicit `Busy` error
+
+**Reference** (read after the probes, or when stuck)
+- tokio tutorial: "Select", "Graceful Shutdown"
+- tokio docs: `select!` (cancellation safety section), `sync::mpsc::channel` (bounded), `tokio_util::sync::CancellationToken`, `task::TaskTracker`
+- "Cancelling async Rust" (sunshowers / Rain, RustConf 2024 talk or blog)
 
 **Build.** `labs/async-lab/`: a `tx-gateway` binary: accepts lines over TCP, pushes into a bounded queue (capacity from config), a worker batches txs every N ms or M items (`select!` on `interval` tick, `recv`, and `token.cancelled()`), and on Ctrl-C stops accepting, flushes the final batch, and exits within a deadline.
 
@@ -108,15 +108,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Every chain exposes JSON-RPC (Substrate `state_getStorage`, Solana `getBalance`, Stellar RPC `getLedgerEntries`). A production client must handle timeouts, retries with backoff, request IDs, batching, and nodes that lie, stall or disconnect. You will reuse this client in Stages 14-16.
 
-**Read first**
-- JSON-RPC 2.0 specification (whole thing, it is short)
-- tokio tutorial "Framing"; serde docs: "Enum representations" (`untagged`, `tag`)
-- AWS Architecture blog: "Exponential Backoff and Jitter"
-
-**Lesson** (`scripts/run.sh S8-T4 learn`)
+**Probes**
 - Request/response correlation by `id`: a `HashMap<Id, oneshot::Sender>` owned by one connection task
 - Retry policy: which errors are retryable, exponential backoff with jitter, and why non-idempotent calls (submit tx) must not blindly retry
 - Testing against a mock server with injected faults: delay, drop, malformed JSON, wrong `id`
+
+**Reference** (read after the probes, or when stuck)
+- JSON-RPC 2.0 specification (whole thing, it is short)
+- tokio tutorial "Framing"; serde docs: "Enum representations" (`untagged`, `tag`)
+- AWS Architecture blog: "Exponential Backoff and Jitter"
 
 **Build.** `labs/rpc-lab/`: `rpc-client` lib (`RpcClient::connect`, `call<P: Serialize, R: DeserializeOwned>(method, params) -> Result<R, RpcError>`, `batch`, per-call timeout, `RetryPolicy`), `mock-node` binary (methods `chain_getBlockNumber`, `getBalance`, `submitTx`; configurable fault injection), and an example that polls block height and stops on Ctrl-C. ADR in `docs/adr/` on retry and idempotency.
 

@@ -3,21 +3,21 @@
 **Phase:** III · Systems
 **Outcome:** You can design a canonical binary encoding and prove it against SCALE and Borsh, choose and domain-separate hashes, build Merkle trees with inclusion proofs, and sign transactions so they cannot be forged, malleated or replayed.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S11-T1 · serde in depth
 *2 days (6 h)*
 
 **Why it matters.** Every RPC, config file and genesis spec goes through serde. Knowing its data model lets you control wire formats instead of accepting whatever `derive` produces, and borrow from input instead of allocating.
 
-**Read first**
-- serde.rs: "Data model", "Attributes" (container, variant, field), "Implementing Serialize", "Implementing Deserialize", "Deserializer lifetimes"
-- serde_json docs: `from_str`, `Value`, `RawValue`
-
-**Lesson** (`scripts/run.sh S11-T1 learn`)
+**Probes**
 - The serde data model: 29 types, Serializer/Deserializer as visitors; derive output expanded with `cargo expand`
 - Attributes: `rename_all`, `tag`/`content`/`untagged`, `default`, `skip_serializing_if`, `deny_unknown_fields`, `with`
 - Zero-copy: `#[serde(borrow)] &'a str` vs `String`, allocation counts printed side by side
+
+**Reference** (read after the probes, or when stuck)
+- serde.rs: "Data model", "Attributes" (container, variant, field), "Implementing Serialize", "Implementing Deserialize", "Deserializer lifetimes"
+- serde_json docs: `from_str`, `Value`, `RawValue`
 
 **Build.** `tasks/src/s11/t01_serde.rs`: `RpcRequest<'a>` (borrowed `method`, `params` as `&RawValue`), an internally tagged `Tx` enum (`Transfer`, `Stake`), `Amount(u128)` that serializes as a decimal string (custom `Serialize`/`Deserialize` with a `Visitor`), `Hex32([u8; 32])` as `0x`-prefixed hex, and a `Genesis` struct with `deny_unknown_fields`.
 
@@ -41,15 +41,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** A hash or signature is over bytes, not values. If two byte strings decode to the same value, signatures malleate and state roots diverge. Substrate uses SCALE, Solana programs mostly Borsh; you must know why both insist on one encoding per value.
 
-**Read first**
-- SCALE codec docs (docs.polkadot.com "Data encoding"; parity-scale-codec README): fixed ints, compact ints, `Option`, `Vec`, enums
-- Borsh specification (borsh.io): determinism rules, length prefixes, why `HashMap` is sorted
-- parity-scale-codec and borsh crate docs (`Encode`, `Decode`, `BorshSerialize`)
-
-**Lesson** (`scripts/run.sh S11-T2 learn`)
+**Probes**
 - Little-endian fixed width; length prefixes; enum discriminants; why no self-description
 - SCALE compact integers: the four modes, worked byte by byte; non-canonical encodings and why decoders must reject them
 - Differential testing: your codec vs the reference crate on random values (proptest)
+
+**Reference** (read after the probes, or when stuck)
+- SCALE codec docs (docs.polkadot.com "Data encoding"; parity-scale-codec README): fixed ints, compact ints, `Option`, `Vec`, enums
+- Borsh specification (borsh.io): determinism rules, length prefixes, why `HashMap` is sorted
+- parity-scale-codec and borsh crate docs (`Encode`, `Decode`, `BorshSerialize`)
 
 **Build.** `tasks/src/s11/t02_codec.rs`: traits `Encode`/`Decode` (`decode(&mut &[u8]) -> Result<Self, CodecError>`), impls for `u8..u128`, `bool`, `Option<T>`, `Vec<T>`, `[u8; N]`, `BTreeMap<K, V>`, a `Compact<u128>` wrapper, and a hand-written impl for `Transfer { from: [u8; 32], to: [u8; 32], amount: Compact<u128>, memo: Option<Vec<u8>> }`. Decoding must consume all input (`decode_all`).
 
@@ -73,15 +73,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Hashes identify blocks, transactions and storage keys. Using the same hash for two purposes without a prefix lets an attacker make one kind of object look like another.
 
-**Read first**
-- `sha2`, `blake2` and `sha3` (Keccak256) crate docs; the `digest` trait
-- Polkadot SDK docs: storage hashers (`Blake2_128Concat`, `Twox64Concat`, `Identity`) and when each is safe
-- NIST SP 800-185 intro (customization strings) or the BLAKE2 paper section on personalization
-
-**Lesson** (`scripts/run.sh S11-T3 learn`)
+**Probes**
 - Preimage, second-preimage and collision resistance; why `twox` is fast but only for trusted keys
 - Domain separation: `H("tx" || data)` vs `H(data)`; BLAKE2 personalization
 - Content addressing: an ID that is the hash of the canonical encoding
+
+**Reference** (read after the probes, or when stuck)
+- `sha2`, `blake2` and `sha3` (Keccak256) crate docs; the `digest` trait
+- Polkadot SDK docs: storage hashers (`Blake2_128Concat`, `Twox64Concat`, `Identity`) and when each is safe
+- NIST SP 800-185 intro (customization strings) or the BLAKE2 paper section on personalization
 
 **Build.** `tasks/src/s11/t03_hashing.rs`: a `Hasher` trait with `Blake2b256`, `Sha256`, `Keccak256` impls via the `digest` crate; `tagged_hash(tag: &[u8], data: &[u8]) -> [u8; 32]` (length-prefixed tag); `TxId::of(&Transfer)` over the S11-T2 encoding; `storage_key(pallet, item, key)` in the `Blake2_128Concat` layout.
 
@@ -104,15 +104,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Merkle roots let a light client verify one transaction or one storage value against a 32-byte header field. The classic bug is a proof that treats an inner node as a leaf.
 
-**Read first**
-- RFC 6962 (Certificate Transparency) section 2.1: Merkle Hash Trees, audit paths
-- Bitcoin whitepaper section 7 (Reclaiming Disk Space) and section 8 (Simplified Payment Verification)
-- Bitcoin CVE-2012-2459 write-up (duplicate last leaf ambiguity)
-
-**Lesson** (`scripts/run.sh S11-T4 learn`)
+**Probes**
 - Building a tree bottom-up; odd leaf counts; RFC 6962 split vs Bitcoin duplicate-last
 - Second-preimage defense: `0x00` leaf prefix, `0x01` node prefix
 - Inclusion proofs: sibling path + index; verification in O(log n)
+
+**Reference** (read after the probes, or when stuck)
+- RFC 6962 (Certificate Transparency) section 2.1: Merkle Hash Trees, audit paths
+- Bitcoin whitepaper section 7 (Reclaiming Disk Space) and section 8 (Simplified Payment Verification)
+- Bitcoin CVE-2012-2459 write-up (duplicate last leaf ambiguity)
 
 **Build.** `tasks/src/s11/t04_merkle.rs`: `MerkleTree::from_leaves(&[Vec<u8>]) -> Result<MerkleTree, MerkleError>`, `root()`, `prove(index) -> Option<Proof>`, `Proof::verify(root, leaf, index, leaf_count) -> bool`, generic over the S11-T3 `Hasher`; naive recursive version vs iterative level-by-level version side by side.
 
@@ -136,15 +136,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** A valid signature only proves someone signed some bytes. Whether those bytes can be replayed on another chain, at another time, or reinterpreted as another message is entirely payload design.
 
-**Read first**
-- RFC 8032 (Ed25519) sections 1, 5.1 intro and 8 (security considerations)
-- ed25519-dalek docs: `SigningKey`, `VerifyingKey`, `verify_strict` vs `verify`
-- EIP-155 (chain id in signatures) and the Polkadot SDK docs on `SignedExtension`/transaction extensions (`CheckNonce`, `CheckGenesis`, `CheckMortality`)
-
-**Lesson** (`scripts/run.sh S11-T5 learn`)
+**Probes**
 - Keypairs, deterministic Ed25519 signing, `verify_strict` and malleability
 - Signing payload = domain tag + chain id + genesis hash + nonce + call + expiry
 - Replay types: same chain (nonce), cross-chain (chain id), cross-message (domain tag), stale (expiry)
+
+**Reference** (read after the probes, or when stuck)
+- RFC 8032 (Ed25519) sections 1, 5.1 intro and 8 (security considerations)
+- ed25519-dalek docs: `SigningKey`, `VerifyingKey`, `verify_strict` vs `verify`
+- EIP-155 (chain id in signatures) and the Polkadot SDK docs on `SignedExtension`/transaction extensions (`CheckNonce`, `CheckGenesis`, `CheckMortality`)
 
 **Build.** `tasks/src/s11/t05_signatures.rs`: `SigningPayload { chain_id, genesis_hash, nonce, valid_until, call }` with canonical encoding from S11-T2, `sign(&SigningKey, &SigningPayload) -> Signature`, `verify(&VerifyingKey, &SigningPayload, &Signature) -> Result<(), SigError>`, and a `NonceTracker` (`BTreeMap<AccountId, u64>`) with `check_and_bump`.
 
@@ -168,14 +168,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** This is the front door of every chain: bytes arrive from the network and must be decoded, authenticated and checked for freshness before any state is touched. Each step fails closed.
 
-**Read first**
-- Re-read your S11-T2 and S11-T5 journals
-- Wormhole exploit post-mortem (Feb 2022, signature-verification bypass via unchecked sysvar account)
-
-**Lesson** (`scripts/run.sh S11-T6 learn`)
+**Probes**
 - Pipeline stages and their error types: decode, verify, nonce, expiry
 - Ordering: cheap checks first, but never act on unauthenticated data
 - Negative tests as the spec: every rejection reason has a test
+
+**Reference** (read after the probes, or when stuck)
+- Re-read your S11-T2 and S11-T5 journals
+- Wormhole exploit post-mortem (Feb 2022, signature-verification bypass via unchecked sysvar account)
 
 **Build.** `tasks/src/s11/t06_pipeline.rs`: `UncheckedTx` (wire bytes) → `decode` → `verify` → `CheckedTx` (typestate: only constructible through verification) → `NonceTracker::apply`; `PipelineError` with variants for each stage. Write an ADR on the signing payload layout.
 

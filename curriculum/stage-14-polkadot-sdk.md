@@ -3,23 +3,23 @@
 **Phase:** V · Chains
 **Outcome:** You write, test, benchmark and upgrade a FRAME pallet, run it in a local node, and explain every macro-generated piece by pointing at the runtime you built by hand in Stage 12.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
-All Stage 14 code lives in `labs/polkadot/`, its own Cargo workspace outside the `tasks` crate (FRAME pulls a large dependency tree, a `wasm32` runtime target and its own toolchain pin). Use the `polkadot-sdk` umbrella crate at the version current when you scaffold; `/start-task` resolves it.
+All Stage 14 code lives in `labs/polkadot/`, its own Cargo workspace outside the `tasks` crate (FRAME pulls a large dependency tree, a `wasm32` runtime target and its own toolchain pin). Use the `polkadot-sdk` umbrella crate at the version current when you scaffold; `/study` resolves it.
 
 ## S14-T1 · FRAME pallet anatomy
 *2 days (6 h)*
 
 **Why it matters.** FRAME is your Stage 12 runtime, industrialized. If you can map every `#[pallet::*]` attribute to the code you wrote by hand, the macros stop being magic and you can debug what they generate.
 
-**Read first**
-- docs.polkadot.com: "Parachains" > "Customize your runtime" > "Pallet development" (make a custom pallet)
-- polkadot-sdk rustdocs (`paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs`): `reference_docs::frame_runtime`, `guides::your_first_pallet`, `frame_support::pallet_macros`
-
-**Lesson** (`labs/polkadot/lessons/t01_anatomy`, run with `cargo test -p t01_anatomy -- --nocapture`)
+**Probes** (`labs/polkadot/lessons/t01_anatomy`, run with `cargo test -p t01_anatomy -- --nocapture`)
 - `#[pallet::pallet]`, `#[pallet::config]`, `#[pallet::call]`: the `Config` trait is your S12-T3 `Config`; `#[pallet::call]` is your S9-T5 `#[module]` macro generating the `Call` enum and dispatch
 - Origins: `ensure_signed`, `ensure_root`, `ensure_none`; `DispatchResult` and why a dispatchable must not panic
 - `cargo expand` on a 30-line pallet: find the generated `Call<T>` enum, `Pallet<T>` struct and `Dispatchable` impl
+
+**Reference** (read after the probes, or when stuck)
+- docs.polkadot.com: "Parachains" > "Customize your runtime" > "Pallet development" (make a custom pallet)
+- polkadot-sdk rustdocs (`paritytech.github.io/polkadot-sdk/master/polkadot_sdk_docs`): `reference_docs::frame_runtime`, `guides::your_first_pallet`, `frame_support::pallet_macros`
 
 **Build.** `labs/polkadot/pallets/counter/`: a `pallet-counter` with a per-account counter, dispatchables `increment(by)`, `reset()` (signed) and `force_set(who, value)` (root), plus an `Error` enum. In `journal/S14-T1.md`, a two-column table mapping each FRAME item to its Stage 12 equivalent.
 
@@ -43,14 +43,14 @@ All Stage 14 code lives in `labs/polkadot/`, its own Cargo workspace outside the
 
 **Why it matters.** Storage is where on-chain cost lives: every read and write is weighed and paid for. Unbounded storage is a denial-of-service vector, and wrong weights let attackers fill blocks for free.
 
-**Read first**
-- polkadot-sdk rustdocs: `frame_support::storage::types` (`StorageValue`, `StorageMap`, `StorageDoubleMap`, `CountedStorageMap`), `BoundedVec`, hashers (`Blake2_128Concat`, `Twox64Concat`, `Identity`)
-- `reference_docs::frame_benchmarking_weight` and `frame_benchmarking::v2` (`#[benchmarks]`); docs.polkadot.com "Benchmark the custom pallet"
-
-**Lesson** (`labs/polkadot/lessons/t02_storage`, run with `cargo test -p t02_storage -- --nocapture`)
+**Probes** (`labs/polkadot/lessons/t02_storage`, run with `cargo test -p t02_storage -- --nocapture`)
 - Storage types are typed keys over a flat trie: compare with your S12-T2 overlay; `ValueQuery` vs `OptionQuery`; why hashers matter (iteration order and key grinding)
 - `#[pallet::event]` + `deposit_event`, `#[pallet::error]`; events vs return values
 - Weights: `Weight` (ref_time, proof_size), `#[pallet::weight]`, `WeightInfo` trait; benchmarking v2 measures a worst case
+
+**Reference** (read after the probes, or when stuck)
+- polkadot-sdk rustdocs: `frame_support::storage::types` (`StorageValue`, `StorageMap`, `StorageDoubleMap`, `CountedStorageMap`), `BoundedVec`, hashers (`Blake2_128Concat`, `Twox64Concat`, `Identity`)
+- `reference_docs::frame_benchmarking_weight` and `frame_benchmarking::v2` (`#[benchmarks]`); docs.polkadot.com "Benchmark the custom pallet"
 
 **Build.** `labs/polkadot/pallets/registry/`: a name registry pallet. `Names: StorageMap<AccountId, BoundedVec<u8, MaxNameLen>>`, `Owners: StorageMap<BoundedVec, AccountId>`, `Count: StorageValue<u32>`; calls `register`, `transfer`, `release` (with a reserved deposit via `fungible::MutateHold` or `ReservableCurrency`); events for each; a `benchmarking.rs` with one benchmark per call and a generated `weights.rs`.
 
@@ -75,14 +75,14 @@ All Stage 14 code lives in `labs/polkadot/`, its own Cargo workspace outside the
 
 **Why it matters.** A pallet is only as trustworthy as its tests, and FRAME tests need a whole (tiny) runtime around them. Building the mock teaches you exactly what a runtime is made of.
 
-**Read first**
-- docs.polkadot.com: "Mock your runtime" and "Pallet unit testing"
-- polkadot-sdk rustdocs: `frame_support::derive_impl`, `frame_system::config_preludes::TestDefaultConfig`, `sp_io::TestExternalities`, `frame_support::runtime` / `construct_runtime!`
-
-**Lesson** (`labs/polkadot/lessons/t03_mock`, run with `cargo test -p t03_mock -- --nocapture`)
+**Probes** (`labs/polkadot/lessons/t03_mock`, run with `cargo test -p t03_mock -- --nocapture`)
 - A mock runtime: `#[derive_impl]` defaults, `impl pallet_balances::Config`, the `Runtime` enum composing pallets (your S12-T3 composition, macro-generated)
 - `new_test_ext()` seeding genesis; `run_to_block` with `on_initialize`/`on_finalize` hooks
 - Assertions: `assert_ok!`, `assert_noop!` (state unchanged), `System::assert_last_event`
+
+**Reference** (read after the probes, or when stuck)
+- docs.polkadot.com: "Mock your runtime" and "Pallet unit testing"
+- polkadot-sdk rustdocs: `frame_support::derive_impl`, `frame_system::config_preludes::TestDefaultConfig`, `sp_io::TestExternalities`, `frame_support::runtime` / `construct_runtime!`
 
 **Build.** `labs/polkadot/pallets/registry/src/{mock.rs,tests.rs}`: a mock with `frame_system` + `pallet_balances` + your registry; at least 12 tests, including deposits held/released and every error.
 
@@ -106,15 +106,15 @@ All Stage 14 code lives in `labs/polkadot/`, its own Cargo workspace outside the
 
 **Why it matters.** Polkadot chains upgrade forklessly by swapping the runtime WASM. The code changes instantly but the stored bytes do not; a missing or wrong migration bricks a live chain.
 
-**Read first**
-- docs.polkadot.com: "Runtime upgrades" and "Storage migrations"
-- polkadot-sdk rustdocs: `frame_support::traits::OnRuntimeUpgrade`, `UncheckedOnRuntimeUpgrade`, `migrations::VersionedMigration`, `StorageVersion`; `pallet_migrations` (multi-block migrations)
-- try-runtime-cli README (`paritytech/try-runtime-cli`)
-
-**Lesson** (`labs/polkadot/lessons/t04_migrations`, run with `cargo test -p t04_migrations -- --nocapture`)
+**Probes** (`labs/polkadot/lessons/t04_migrations`, run with `cargo test -p t04_migrations -- --nocapture`)
 - Why migrations exist: SCALE has no schema (S11-T2); old bytes decoded as new types = garbage or failure
 - `#[pallet::storage_version]`, `VersionedMigration<FROM, TO, Inner, Pallet, DbWeight>`, `pre_upgrade`/`post_upgrade` under `try-runtime`
 - Single-block weight limits; when you need multi-block migrations
+
+**Reference** (read after the probes, or when stuck)
+- docs.polkadot.com: "Runtime upgrades" and "Storage migrations"
+- polkadot-sdk rustdocs: `frame_support::traits::OnRuntimeUpgrade`, `UncheckedOnRuntimeUpgrade`, `migrations::VersionedMigration`, `StorageVersion`; `pallet_migrations` (multi-block migrations)
+- try-runtime-cli README (`paritytech/try-runtime-cli`)
 
 **Build.** `labs/polkadot/pallets/registry/src/migrations/v1.rs`: change `Names` value from `BoundedVec<u8>` to a `NameRecord { name, registered_at: BlockNumber }`, bump storage version 0 to 1, write the migration with `pre_upgrade`/`post_upgrade` checks, and tests that seed v0 storage and verify v1.
 
@@ -138,14 +138,14 @@ All Stage 14 code lives in `labs/polkadot/`, its own Cargo workspace outside the
 
 **Why it matters.** Unit tests prove the logic; a running node proves integration: genesis config, runtime API, extrinsic encoding, fees and events as a wallet sees them.
 
-**Read first**
-- docs.polkadot.com: "Set up the parachain template", "Add pallets to the runtime", "Run a parachain network"
-- `paritytech/polkadot-sdk-parachain-template` README; `polkadot-omni-node` and `chain-spec-builder`; Chopsticks (`AcalaNetwork/chopsticks`) for forking and dry-running
-
-**Lesson** (`labs/polkadot/README.md` walkthrough, run with `polkadot-omni-node --chain ./chain_spec.json --dev`)
+**Probes** (`labs/polkadot/README.md` walkthrough, run with `polkadot-omni-node --chain ./chain_spec.json --dev`)
 - Template layout: `runtime/` (WASM + native), `pallets/`, no custom node: omni-node runs any compatible runtime
 - Adding a pallet: `Cargo.toml` features (`std`, `runtime-benchmarks`, `try-runtime`), `impl Config for Runtime`, adding it to the runtime composition, genesis preset
 - Submitting extrinsics from Polkadot.js Apps or a `subxt` client; reading events
+
+**Reference** (read after the probes, or when stuck)
+- docs.polkadot.com: "Set up the parachain template", "Add pallets to the runtime", "Run a parachain network"
+- `paritytech/polkadot-sdk-parachain-template` README; `polkadot-omni-node` and `chain-spec-builder`; Chopsticks (`AcalaNetwork/chopsticks`) for forking and dry-running
 
 **Build.** `labs/polkadot/node/`: the parachain template (version current when you scaffold) with `pallet-registry` (v1) integrated, a genesis preset that pre-registers one name, and `labs/polkadot/client/`: a `subxt` Rust binary that registers a name, transfers it and prints the events.
 

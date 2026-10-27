@@ -3,23 +3,23 @@
 **Phase:** III · Systems
 **Outcome:** You can write a small `unsafe` abstraction with a stated safety contract and prove it clean under Miri, call C through FFI, build a `no_std + alloc` library, and run a Rust WASM guest inside a metered wasmtime host: the exact toolchain under Substrate runtimes, Solana programs and Soroban contracts.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S10-T1 · Unsafe Rust, invariants & Miri
 *2 days (6 h)*
 
 **Why it matters.** `unsafe` does not turn off the borrow checker; it unlocks five extra operations and moves the proof obligation from the compiler to you. Every runtime host, allocator and codec fast path contains some. Knowing how to fence it behind a safe API is what separates a senior engineer from someone who copies `transmute` from Stack Overflow.
 
-**Read first**
+**Probes**
+- The five unsafe superpowers; soundness vs safety; why a safe fn that can cause UB is a bug even if nobody calls it wrong
+- `// SAFETY:` comments and `# Safety` doc sections: invariant, precondition, who upholds it
+- Naive version (`Vec` + indices with `unwrap`) vs raw-pointer version side by side; Miri catching a dangling read and an aliasing violation live
+
+**Reference** (read after the probes, or when stuck)
 - The Rustonomicon: "Meet Safe and Unsafe", "How Safe and Unsafe Interact", "Working with Unsafe", "Aliasing"
 - The Rust Book ch. 20.1 (Unsafe Rust)
 - Miri README (github.com/rust-lang/miri): installation, `cargo miri test`, Stacked/Tree Borrows
 - std docs: `std::ptr` module (`read`, `write`, `NonNull`, `addr_of!`), `MaybeUninit`, `slice::from_raw_parts`
-
-**Lesson** (`scripts/run.sh S10-T1 learn`)
-- The five unsafe superpowers; soundness vs safety; why a safe fn that can cause UB is a bug even if nobody calls it wrong
-- `// SAFETY:` comments and `# Safety` doc sections: invariant, precondition, who upholds it
-- Naive version (`Vec` + indices with `unwrap`) vs raw-pointer version side by side; Miri catching a dangling read and an aliasing violation live
 
 **Build.** `tasks/src/s10/t01_unsafe.rs`: a fixed-capacity `RingBuffer<T, const N: usize>` over `[MaybeUninit<T>; N]` with `push`, `pop`, `peek`, `len` and a correct `Drop`; `split_at_mut_raw(&mut [T], usize) -> Option<(&mut [T], &mut [T])>` re-implemented with raw pointers; `unsafe fn read_u32_le(ptr: *const u8) -> u32` with a documented contract and a safe wrapper `read_u32_le_checked(&[u8]) -> Option<u32>`.
 
@@ -44,14 +44,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Crypto libraries, databases (RocksDB under Substrate) and VMs cross the C ABI. FFI is where layout, ownership and null-termination stop being guaranteed by Rust.
 
-**Read first**
-- The Rustonomicon: "FFI", "Alternative representations" (`repr(C)`, `repr(transparent)`)
-- `cc` crate docs (docs.rs/cc); std docs: `std::ffi::CString`, `CStr`, `c_char`
-
-**Lesson** (`scripts/run.sh S10-T2 learn`)
+**Probes**
 - `extern "C"`, `unsafe extern` blocks (edition 2024), linking a C file with a `build.rs` and `cc`
 - `repr(Rust)` vs `repr(C)`: field order, padding, `size_of`/`align_of` printed side by side
 - `CString` vs `&str`: interior NULs, who frees the memory, never `free` a Rust pointer from C
+
+**Reference** (read after the probes, or when stuck)
+- The Rustonomicon: "FFI", "Alternative representations" (`repr(C)`, `repr(transparent)`)
+- `cc` crate docs (docs.rs/cc); std docs: `std::ffi::CString`, `CStr`, `c_char`
 
 **Build.** `labs/ffi-checksum/`: a crate with `c/checksum.c` (`uint32_t adler32(const uint8_t*, size_t)` and `int greet(const char*, char* out, size_t out_len)`), `build.rs` with `cc`, a `#[repr(C)] struct Header { version: u8, len: u32, flags: u16 }`, and safe Rust wrappers `adler32(&[u8]) -> u32` and `greet(&str) -> Result<String, FfiError>`.
 
@@ -75,15 +75,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Substrate runtimes compile to WASM with `no_std`, Solana programs build for SBF without most of std, and Soroban contracts are `no_std`. The pattern is always the same: a core crate on `core` + `alloc` with a `std` feature for tests and tooling.
 
-**Read first**
-- The Embedded Rust Book: "no_std" chapter
-- `core` and `alloc` crate docs (what is missing: `HashMap`, `std::io`, threads, time)
-- Polkadot SDK docs: "Build a deterministic runtime" / why runtimes are `no_std`
-
-**Lesson** (`scripts/run.sh S10-T3 learn`)
+**Probes**
 - `#![no_std]`, `extern crate alloc`, `#![cfg_attr(not(feature = "std"), no_std)]`
 - `alloc::collections::BTreeMap` replaces `HashMap`; `core::fmt` replaces `std::io`; errors without `std::error::Error`
 - Proving it: `cargo build --target wasm32-unknown-unknown --no-default-features` and `cargo tree -e features`
+
+**Reference** (read after the probes, or when stuck)
+- The Embedded Rust Book: "no_std" chapter
+- `core` and `alloc` crate docs (what is missing: `HashMap`, `std::io`, threads, time)
+- Polkadot SDK docs: "Build a deterministic runtime" / why runtimes are `no_std`
 
 **Build.** `labs/ledger-core/`: a `no_std + alloc` crate with `Ledger { balances: BTreeMap<[u8; 32], u128> }`, `transfer`, `mint`, `total_issuance`, a `LedgerError` implementing `core::fmt::Display` (and `std::error::Error` only behind `feature = "std"`), and a `std`-gated `Ledger::dump_json(&self) -> String`.
 
@@ -107,15 +107,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Substrate runtimes, ink! and Soroban contracts are WASM modules executed by a host that exposes storage and crypto as imported functions. Building both sides once makes every host/guest boundary in those chains legible.
 
-**Read first**
-- Rust and WebAssembly book: "What is WebAssembly?", linear memory
-- wasmtime docs: "Embedding in Rust", `Linker`, `Store`, `Memory`, `Func::wrap`
-- WebAssembly spec overview: imports, exports, linear memory, traps
-
-**Lesson** (`scripts/run.sh S10-T4 learn`)
+**Probes**
 - `wasm32-unknown-unknown`, `crate-type = ["cdylib"]`, `#[unsafe(no_mangle)] extern "C"` exports
 - Passing bytes across the boundary: guest exports `alloc`, host writes into linear memory, `(ptr, len)` pairs
 - Host functions via `Linker::func_wrap`; a trap vs a returned error code
+
+**Reference** (read after the probes, or when stuck)
+- Rust and WebAssembly book: "What is WebAssembly?", linear memory
+- wasmtime docs: "Embedding in Rust", `Linker`, `Store`, `Memory`, `Func::wrap`
+- WebAssembly spec overview: imports, exports, linear memory, traps
 
 **Build.** `labs/wasm-host/` with two crates: `guest/` (`no_std`, exports `add(i32, i32) -> i32`, `alloc(len) -> ptr`, `hash_and_log(ptr, len)` which calls an imported `env.log(ptr, len)` and `env.blake2(ptr, len, out_ptr)`) and `host/` (loads the guest `.wasm`, provides the imports, reads guest memory with bounds checks, prints results).
 
@@ -139,15 +139,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Every smart-contract platform must stop an infinite loop and charge for work. Soroban and ink! do it with metering inside a WASM host and storage exposed only through host functions. You will build that loop end to end.
 
-**Read first**
-- wasmtime docs: `Config::consume_fuel`, `Store::set_fuel`, `Store::get_fuel`, `ResourceLimiter`
-- Soroban docs: "Contract lifecycle", "Fees and metering"; ink! docs: "Storage" overview
-- Polkadot SDK docs: weights and why execution must be bounded
-
-**Lesson** (`scripts/run.sh S10-T5 learn`)
+**Probes**
 - Fuel: deterministic instruction counting vs wall-clock timeouts (and why chains reject the latter)
 - Host storage API: `storage_get`, `storage_set`, gas charged per byte in the host function
 - Transactional execution: buffer writes, commit only if the call returns success
+
+**Reference** (read after the probes, or when stuck)
+- wasmtime docs: `Config::consume_fuel`, `Store::set_fuel`, `Store::get_fuel`, `ResourceLimiter`
+- Soroban docs: "Contract lifecycle", "Fees and metering"; ink! docs: "Storage" overview
+- Polkadot SDK docs: weights and why execution must be bounded
 
 **Build.** `labs/wasm-sandbox/`: host `Sandbox { storage: BTreeMap<Vec<u8>, Vec<u8>> }` with `call(wasm, entry, input, fuel_limit) -> Result<CallReceipt, SandboxError>`; host functions `storage_get`, `storage_set`, `input_len`, `read_input`, `set_return`; a `counter` guest contract (`increment`, `get`) and a `looper` guest that never terminates. Write an ADR in `docs/adr/` on fuel vs timeout and write buffering.
 

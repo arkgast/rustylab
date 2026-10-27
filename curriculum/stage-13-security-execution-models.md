@@ -3,23 +3,23 @@
 **Phase:** IV · Protocol
 **Outcome:** You can explain how UTXO, Substrate, Solana and Soroban model state and authorization, recognize the classic on-chain vulnerability classes in Rust code, prove each with an exploit test before fixing it, fuzz a runtime for invariant violations, and write a professional audit report of your own code.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S13-T1 · Account models: UTXO, Substrate, Solana & Soroban
 *1 day (3 h)*
 
 **Why it matters.** Most chain-specific bugs come from carrying one chain's mental model into another. On Solana the program must check every account it is handed; on Substrate the runtime reads storage itself; on Soroban auth is a host call. Knowing where each model puts the trust boundary tells you what you must check.
 
-**Read first**
+**Probes**
+- UTXO: state is a set of unspent outputs; a tx consumes and creates; double-spend = spending a consumed input
+- Accounts passed explicitly (Solana) vs storage read implicitly (Substrate, Soroban); why explicit lists enable parallelism (Sealevel)
+- Where authorization lives: signature on inputs, `ensure_signed(origin)`, `is_signer` + owner check, `require_auth`
+
+**Reference** (read after the probes, or when stuck)
 - Bitcoin whitepaper sections 2 (Transactions) and 9 (Combining and Splitting Value)
 - Solana docs: "Accounts", "Programs", "Transactions" (account lists, `is_signer`, `is_writable`, owner); Sealevel blog post ("Sealevel: Parallel Processing Thousands of Smart Contracts")
 - Soroban docs: "Storage types" (instance, persistent, temporary, TTL) and "Authorization" (`require_auth`)
 - Polkadot SDK docs: "Accounts, addresses and keys", storage in FRAME
-
-**Lesson** (`scripts/run.sh S13-T1 learn`)
-- UTXO: state is a set of unspent outputs; a tx consumes and creates; double-spend = spending a consumed input
-- Accounts passed explicitly (Solana) vs storage read implicitly (Substrate, Soroban); why explicit lists enable parallelism (Sealevel)
-- Where authorization lives: signature on inputs, `ensure_signed(origin)`, `is_signer` + owner check, `require_auth`
 
 **Build.** `tasks/src/s13/t01_models.rs`: three tiny models of the same "transfer 10 from A to B": `utxo::apply(&mut UtxoSet, Tx)`, `solana_like::process(program_id, accounts: &[AccountInfo], data)` with owner and signer checks, and `soroban_like::transfer(&mut Env, from, to, amount)` with `env.require_auth(from)` and storage tiers. Plus `docs/execution-models.md`: a comparison table (state location, auth, parallelism, rent/TTL, replay protection) and one page of prose.
 
@@ -42,18 +42,18 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Auditors find bugs by knowing the classes. Writing the exploit first proves the bug is real, gives you a regression test, and trains the attacker's eye you need when reviewing your own code.
 
-**Read first**
+**Probes**
+- Red → green: an exploit test that passes against the vulnerable code (asserts the attacker profits), then flips to expecting an error after the fix
+- The classes: missing signer, missing owner / account substitution, overflow, unchecked fee math, reentrancy-like callback ordering, unbounded iteration, replay
+- Fix patterns: checks-effects-interactions, typed validated accounts, checked math, bounded loops with weight, nonces + domain
+
+**Reference** (read after the probes, or when stuck)
 - Wormhole exploit write-up (Feb 2022: unchecked sysvar account let a forged signature verification pass)
 - Cashio exploit write-up (Mar 2022: missing validation of collateral account chain)
 - Neodyme "Solana common pitfalls" / Sealevel attacks repo (coral-xyz/sealevel-attacks)
 - Polkadot SDK docs: "Safe arithmetic" and weight/unbounded-iteration guidance; The DAO post-mortem (reentrancy) summary
 
-**Lesson** (`scripts/run.sh S13-T2 learn`)
-- Red → green: an exploit test that passes against the vulnerable code (asserts the attacker profits), then flips to expecting an error after the fix
-- The classes: missing signer, missing owner / account substitution, overflow, unchecked fee math, reentrancy-like callback ordering, unbounded iteration, replay
-- Fix patterns: checks-effects-interactions, typed validated accounts, checked math, bounded loops with weight, nonces + domain
-
-**Build.** `tasks/src/s13/t02_vulns/`: seven intentionally vulnerable modules (provided as stubs by `/start-task`): `missing_signer.rs`, `account_substitution.rs`, `overflow.rs`, `fee_math.rs`, `callback_order.rs`, `unbounded_iter.rs`, `replay.rs`. For each: write `exploit_*` test in the module showing the attack succeeds, commit the red state in the journal (paste the output), then fix the code so the test asserts the attack fails. Each fix gets a two-line `//` comment naming the class.
+**Build.** `tasks/src/s13/t02_vulns/`: seven intentionally vulnerable modules (provided as stubs by `/study`): `missing_signer.rs`, `account_substitution.rs`, `overflow.rs`, `fee_math.rs`, `callback_order.rs`, `unbounded_iter.rs`, `replay.rs`. For each: write `exploit_*` test in the module showing the attack succeeds, commit the red state in the journal (paste the output), then fix the code so the test asserts the attack fails. Each fix gets a two-line `//` comment naming the class.
 
 **Run.** `scripts/run.sh S13-T2` prints, per module, the exploit outcome before and after (`--vulnerable` flag keeps the original behind a feature).
 
@@ -75,15 +75,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Unit tests check what you thought of. Fuzzers and invariant tests check what you did not. Every serious protocol team fuzzes its decoder and its state transition function.
 
-**Read first**
-- Rust Fuzz Book (rust-fuzz.github.io/book): cargo-fuzz, `fuzz_target!`, `arbitrary`
-- `arbitrary` crate docs; proptest book: state machine testing (`proptest-state-machine`)
-- Trail of Bits blog: "Fuzzing blockchain state machines" / invariant testing overview
-
-**Lesson** (`scripts/run.sh S13-T3 learn`)
+**Probes**
 - Coverage-guided fuzzing: corpus, crashes, minimization (`cargo fuzz tmin`)
 - Structured fuzzing with `#[derive(Arbitrary)]` sequences of calls
 - Invariants for a runtime: total issuance conservation, no negative/overflowed balance, nonce monotonicity, root determinism
+
+**Reference** (read after the probes, or when stuck)
+- Rust Fuzz Book (rust-fuzz.github.io/book): cargo-fuzz, `fuzz_target!`, `arbitrary`
+- `arbitrary` crate docs; proptest book: state machine testing (`proptest-state-machine`)
+- Trail of Bits blog: "Fuzzing blockchain state machines" / invariant testing overview
 
 **Build.** `labs/runtime/fuzz/` with targets `decode_extrinsic` (raw bytes → decode → must not panic) and `call_sequence` (arbitrary `Vec<(Origin, RuntimeCall)>` applied to a genesis state, asserting all invariants after every call); plus `labs/runtime/tests/s13_invariants.rs`, a proptest state-machine test comparing the runtime with a simple reference model.
 
@@ -107,14 +107,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Writing the report is the deliverable auditors are paid for: precise severity, reproducible proof, and a fix a team can merge. Auditing your own code also exposes the gap between what you meant and what you wrote.
 
-**Read first**
-- Two public audit reports for Rust chains (e.g. an SR Labs Polkadot SDK audit and an OtterSec or Neodyme Solana program audit): note structure and severity language
-- Immunefi or Code4rena severity classification
-
-**Lesson** (`scripts/run.sh S13-T4 learn`)
+**Probes**
 - Threat model first: actors, assets, trust boundaries, entry points
 - Finding format: title, severity (impact × likelihood), affected code, description, PoC test, recommendation, status
 - Distinguishing a bug, a design weakness and an informational note
+
+**Reference** (read after the probes, or when stuck)
+- Two public audit reports for Rust chains (e.g. an SR Labs Polkadot SDK audit and an OtterSec or Neodyme Solana program audit): note structure and severity language
+- Immunefi or Code4rena severity classification
 
 **Build.** `docs/audits/runtime-v1.md`: scope (commit hash, files), threat model, methodology (manual review, S13-T2 checklist, S13-T3 fuzzing), at least 6 findings across at least 3 severities, each with a PoC test in `labs/runtime/tests/audit_*.rs`, the fix commit and a retest result. Fix every Critical and High.
 

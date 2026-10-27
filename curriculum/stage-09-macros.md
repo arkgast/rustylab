@@ -3,22 +3,22 @@
 **Phase:** II · Depth
 **Outcome:** You read and write `macro_rules!` with repetitions and internal rules, build derive, attribute and function-like proc macros with `syn` and `quote` that fail with precise error spans, test them with `trybuild`, and read any framework macro's expansion with `cargo expand`.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S9-T1 · macro_rules! fundamentals
 *2 days (6 h)*
 
 **Why it matters.** Macros remove boilerplate that functions and generics cannot: variadic arguments, generated items, compile-time DSLs. FRAME, Anchor and the Soroban SDK are mostly macros; you cannot debug them until you can write one.
 
-**Read first**
-- The Rust Book ch. 20.5 (Macros)
-- The Little Book of Rust Macros: "Macros, A Methodical Introduction" (all of it)
-- The Rust Reference: "Macros By Example" (fragment specifiers, follow-set rules, hygiene)
-
-**Lesson** (`scripts/run.sh S9-T1 learn`)
+**Probes**
 - Matchers and transcribers; fragment specifiers (`expr`, `ident`, `ty`, `tt`, `literal`, `pat`, `vis`) and why `expr` cannot be followed by just anything
 - Repetitions `$(...),*` / `$(...);+` and nested repetitions; a copy-pasted `impl` block per type vs one macro that generates all of them
 - Hygiene: a local `let` inside a macro does not clash with the caller's; `cargo expand` to see the output; `#[macro_export]` and textual scope
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 20.5 (Macros)
+- The Little Book of Rust Macros: "Macros, A Methodical Introduction" (all of it)
+- The Rust Reference: "Macros By Example" (fragment specifiers, follow-set rules, hygiene)
 
 **Build.** `tasks/src/s09/t01_macro_rules.rs`: `btreemap!{ k => v, ... }` (trailing comma ok), `max!(a, b, c, ...)` with checked comparison, `newtype!(pub AccountId(u64))` generating the struct + `From`/`Display`, `impl_checked_ops!(Balance, u128)` generating `checked_add`/`checked_sub`, and `ensure!(cond, err)` returning `Err(err.into())`.
 
@@ -43,14 +43,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Real-world declarative macros parse small languages: `vec!`, `matches!`, `tokio::select!`, `frame_support::construct_runtime!` (historically). TT-munchers, internal rules and `$crate` are how they stay correct across crates.
 
-**Read first**
-- The Little Book of Rust Macros: "Patterns" (Callbacks, Incremental TT Munchers, Internal Rules, Push-down Accumulation, Counting)
-- The Rust Reference: "Macros By Example", `$crate` and "Hygiene" sections
-
-**Lesson** (`scripts/run.sh S9-T2 learn`)
+**Probes**
 - Incremental TT munchers: consume tokens one rule at a time; recursion limit
 - Internal rules (`(@step ...)`) and push-down accumulation; counting tokens at compile time
 - `$crate::path` so the macro works from any crate; `compile_error!` for helpful failures
+
+**Reference** (read after the probes, or when stuck)
+- The Little Book of Rust Macros: "Patterns" (Callbacks, Incremental TT Munchers, Internal Rules, Push-down Accumulation, Counting)
+- The Rust Reference: "Macros By Example", `$crate` and "Hygiene" sections
 
 **Build.** `tasks/src/s09/t02_advanced_macros.rs`: `count!(a b c) == 3` as a `const`; `bitflags_lite!{ struct Perms: u8 { READ = 1, WRITE = 2 } }` generating consts, `contains`, `union`; `state_machine!{ Idle -> Running on Start; Running -> Idle on Stop; }` generating a `State` enum, `Event` enum and `fn next(self, Event) -> Result<State, InvalidTransition>`; `storage_map!` using `$crate` paths only.
 
@@ -75,16 +75,16 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** `#[derive(Encode, Decode, TypeInfo)]` in Substrate, `#[derive(AnchorSerialize)]` and `#[contracttype]` in Soroban are proc macros. Writing one teaches you how they see your code, why they reject some inputs, and how to read their errors.
 
-**Read first**
+**Probes**
+- A proc-macro crate (`proc-macro = true`): `TokenStream` in, `TokenStream` out; `syn` parses, `quote` generates
+- Errors: `panic!` in a macro (ugly, no span) vs `syn::Error::new_spanned(field, "...")` pointing at the exact field
+- Generics: `split_for_impl` and adding where-clause bounds; testing with `trybuild` pass/fail UI tests and `.stderr` snapshots
+
+**Reference** (read after the probes, or when stuck)
 - The Rust Reference: "Procedural Macros"
 - dtolnay's proc-macro-workshop: `builder` project README and tests 01-06
 - `syn` docs: `DeriveInput`, `Data`, `Fields`, `Error::new_spanned`, `Error::to_compile_error`; `quote` docs: `quote!`, `format_ident!`, repetition `#(...)*`
 - `trybuild` README
-
-**Lesson** (`scripts/run.sh S9-T3 learn`)
-- A proc-macro crate (`proc-macro = true`): `TokenStream` in, `TokenStream` out; `syn` parses, `quote` generates
-- Errors: `panic!` in a macro (ugly, no span) vs `syn::Error::new_spanned(field, "...")` pointing at the exact field
-- Generics: `split_for_impl` and adding where-clause bounds; testing with `trybuild` pass/fail UI tests and `.stderr` snapshots
 
 **Build.** `labs/macros-lab/` workspace: `encode-derive` (proc-macro crate) and `encode` (runtime crate with `trait Encode { fn encode_to(&self, out: &mut Vec<u8>); }` impls for ints, `bool`, `Vec<T>`, `String`). `#[derive(Encode)]` for named structs, tuple structs and enums (variant index as `u8` prefix), supporting generics and a `#[encode(skip)]` field attribute.
 
@@ -108,15 +108,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Attribute macros rewrite the item they decorate (`#[tokio::main]`, `#[pallet::call]`, `#[program]`, `#[contractimpl]`). Function-like macros parse custom syntax (`sqlx::query!`, `construct_runtime!`). Both are the frameworks' main surface.
 
-**Read first**
-- proc-macro-workshop: `sorted` (attribute) and `seq` (function-like) READMEs and first tests
-- `syn` docs: `ItemFn`, `ItemImpl`, `parse::Parse`, `parse_macro_input!`, `visit_mut::VisitMut`
-- The Little Book of Rust Macros: "Procedural Macros" chapter
-
-**Lesson** (`scripts/run.sh S9-T4 learn`)
+**Probes**
 - `#[proc_macro_attribute]`: `(attr, item)`; wrapping a function body while keeping its signature and span
 - `#[proc_macro]` with a custom `impl Parse` for a small grammar
 - Preserving user code: emit the original item unchanged plus generated items vs mutating it in place with `VisitMut`
+
+**Reference** (read after the probes, or when stuck)
+- proc-macro-workshop: `sorted` (attribute) and `seq` (function-like) READMEs and first tests
+- `syn` docs: `ItemFn`, `ItemImpl`, `parse::Parse`, `parse_macro_input!`, `visit_mut::VisitMut`
+- The Little Book of Rust Macros: "Procedural Macros" chapter
 
 **Build.** `labs/macros-lab/`: `#[timed]` attribute that wraps a function and logs its duration (works on `async fn` too); `#[weight(10)]` attribute that adds a `const WEIGHT_<NAME>: u64`; function-like `units!(1.5 DOT)` that converts a decimal literal to an integer `u128` with `DECIMALS = 10` at compile time, rejecting precision loss and overflow with spanned errors.
 
@@ -140,15 +140,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** FRAME's `#[pallet::call]`, Anchor's `#[program]` and Soroban's `#[contractimpl]` all do the same thing: read an `impl` block and generate a `Call` enum plus a dispatch function that routes encoded calls to methods. Build it yourself and those frameworks stop being opaque.
 
-**Read first**
-- Polkadot SDK docs: `frame_support::pallet_macros::call` and "FRAME macros" overview
-- Anchor docs: "Program module" (`#[program]`)
-- Re-read your S9-T3, S9-T4 journals and, optionally, the archived `call!` macro (`git show archive/legacy-projects:state_machine/macros/src/call/mod.rs`)
-
-**Lesson** (`scripts/run.sh S9-T5 learn`)
+**Probes**
 - Reading an `ItemImpl`: methods, `self` receivers, argument patterns and types; skipping non-call items
 - Generating `enum Call { Transfer { to: AccountId, amount: u128 }, ... }`, `impl Dispatch for Module` with an exhaustive `match`, and `Encode`/`Decode` via your S9-T3 derive
 - Validation as spanned errors: first arg must be `caller: AccountId`, return type must be `DispatchResult`, no generics, no `self` by value
+
+**Reference** (read after the probes, or when stuck)
+- Polkadot SDK docs: `frame_support::pallet_macros::call` and "FRAME macros" overview
+- Anchor docs: "Program module" (`#[program]`)
+- Re-read your S9-T3, S9-T4 journals and, optionally, the archived `call!` macro (`git show archive/legacy-projects:state_machine/macros/src/call/mod.rs`)
 
 **Build.** `labs/macros-lab/module-macro/` + `labs/macros-lab/module-demo/`: `#[module]` on `impl Balances { fn transfer(&mut self, caller: AccountId, to: AccountId, amount: u128) -> DispatchResult; ... }` generates `balances::Call`, `Call::dispatch(self, &mut Balances, caller) -> DispatchResult`, `Call::name(&self) -> &'static str`, and a `const CALLS: &[&str]`. Demo runtime with two modules and an outer `RuntimeCall` enum written by hand. ADR in `docs/adr/` on what the macro generates and why.
 

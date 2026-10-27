@@ -3,23 +3,23 @@
 **Phase:** II · Depth
 **Outcome:** You read a borrow-checker error and know which rule it enforces, design structs that borrow instead of copy, choose the right smart pointer or cell on purpose, predict a type's size and layout, and prove what must *not* compile with `compile_fail` doctests.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S5-T1 · Lifetime annotations & compile_fail doctests
 *2 days (6 h)*
 
 **Why it matters.** A lifetime is a promise the compiler checks: "this reference never outlives the data it points to". Runtimes hand out views into storage and calldata all the time; getting the relation between those views right is what keeps a parser from reading freed memory. From this task on, the things Rust *rejects* are part of your API, and `compile_fail` doctests are how you prove them.
 
-**Read first**
+**Probes**
+- The three elision rules; when you must write `'a`; `fn longest<'a>(a: &'a str, b: &'a str) -> &'a str` vs the naive "return an owned `String`" version and what each costs
+- Structs holding references (`struct Parser<'a> { input: &'a str }`); `T: 'static` means "owns its data or borrows forever", not "lives for the whole program"
+- ```` ```compile_fail,E0597 ```` doctests: one-line comment naming the broken rule and the fix; variance in one table (`&'a T` covariant, `&'a mut T` invariant in `T`, `fn(T)` contravariant) and why `&mut` must be invariant
+
+**Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 10.3 (Validating References with Lifetimes)
 - The Rustonomicon: "Lifetimes", "Lifetime Elision", "Subtyping and Variance" (overview only)
 - rustdoc book: "Documentation tests" (`compile_fail`, `should_panic`, `ignore`, error codes)
 - "Common Rust Lifetime Misconceptions" (pretzelhammer), misconceptions 1-6
-
-**Lesson** (`scripts/run.sh S5-T1 learn`)
-- The three elision rules; when you must write `'a`; `fn longest<'a>(a: &'a str, b: &'a str) -> &'a str` vs the naive "return an owned `String`" version and what each costs
-- Structs holding references (`struct Parser<'a> { input: &'a str }`); `T: 'static` means "owns its data or borrows forever", not "lives for the whole program"
-- ```` ```compile_fail,E0597 ```` doctests: one-line comment naming the broken rule and the fix; variance in one table (`&'a T` covariant, `&'a mut T` invariant in `T`, `fn(T)` contravariant) and why `&mut` must be invariant
 
 **Build.** `tasks/src/s05/t01_lifetimes.rs`: `longest`, `first_sentence`, `split_pair<'a>(&'a str, char) -> Option<(&'a str, &'a str)>`, `struct Highlighter<'t> { text: &'t str }` with `fn words(&self) -> impl Iterator<Item = &'t str>`, `struct Pair<'a, 'b>` that returns only the `'a` half, plus at least 4 `compile_fail` doctests.
 
@@ -44,14 +44,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Nodes parse blocks, transactions and RPC payloads millions of times. Copying every field into a `String` costs allocations; borrowing slices from the input buffer costs nothing. Solana's account data and SCALE decoding both live on this idea.
 
-**Read first**
-- The Rust Book ch. 8.2 (Strings), std docs: `str::split_once`, `slice::split_at_checked`, `u32::from_le_bytes`
-- `nom` README (skim only, to see the `&[u8] -> (rest, value)` shape)
-
-**Lesson** (`scripts/run.sh S5-T2 learn`)
+**Probes**
 - Owned parse (`Vec<String>`) vs borrowed parse (`Vec<&str>`) side by side, with allocation counts printed
 - The cursor pattern: `fn take<'a>(input: &mut &'a [u8], n: usize) -> Result<&'a [u8], ParseError>`
 - Returning views: the output lifetime is tied to the input, never to the parser
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 8.2 (Strings), std docs: `str::split_once`, `slice::split_at_checked`, `u32::from_le_bytes`
+- `nom` README (skim only, to see the `&[u8] -> (rest, value)` shape)
 
 **Build.** `tasks/src/s05/t02_zero_copy.rs`: a `Cursor<'a>` over `&'a [u8]` with `u8`, `u32_le`, `bytes(n)`, `str_prefixed` (length-prefixed UTF-8); `Header<'a>` and `Record<'a>` types; `parse_frame(&[u8]) -> Result<Frame<'_>, ParseError>`; `parse_kv_lines(&str) -> Result<Vec<(&str, &str)>, ParseError>`.
 
@@ -75,14 +75,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Ownership is a tree by default. When you need a heap value, recursion, shared ownership or back-pointers, you pick a pointer type, and each choice has a cost and a failure mode (Rc cycles leak).
 
-**Read first**
-- The Rust Book ch. 15.1-15.4 and 15.6 (Reference Cycles Can Leak Memory)
-- std docs: `Rc::strong_count`, `Rc::downgrade`, `Weak::upgrade`, `Rc::try_unwrap`
-
-**Lesson** (`scripts/run.sh S5-T3 learn`)
+**Probes**
 - `Box<T>` for recursive types and trait objects; `Deref` and auto-deref
 - `Rc<T>` shared ownership vs cloning the data; counts printed as you go
 - `Weak<T>` for parent links; a cycle that leaks vs the same tree with `Weak`; `Drop` order printed
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 15.1-15.4 and 15.6 (Reference Cycles Can Leak Memory)
+- std docs: `Rc::strong_count`, `Rc::downgrade`, `Weak::upgrade`, `Rc::try_unwrap`
 
 **Build.** `tasks/src/s05/t03_smart_pointers.rs`: `enum List { Cons(i64, Box<List>), Nil }` with `sum` and `push_front`; a `Tree` of `Rc<Node>` children with `Weak` parent links (`add_child`, `parent_value`, `depth`); a `Tracked` type whose `Drop` logs into a shared log so tests can assert drop order.
 
@@ -106,14 +106,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Sometimes `&self` has to change something: a cache, a counter, lazy init. Interior mutability moves the aliasing check from compile time to runtime (or forbids references entirely). Know the price before you pay it.
 
-**Read first**
-- The Rust Book ch. 15.5 (RefCell and the Interior Mutability Pattern)
-- std docs: `Cell`, `RefCell::try_borrow_mut`, `OnceCell`, `std::sync::LazyLock`
-
-**Lesson** (`scripts/run.sh S5-T4 learn`)
+**Probes**
 - `Cell<T>` for `Copy` values: get/set, never a reference
 - `RefCell<T>`: borrow flags; a double `borrow_mut` that panics at runtime vs the `try_borrow_mut` version
 - `OnceCell` / `LazyLock` for compute-once values; `UnsafeCell` as the primitive under all of them (one line)
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 15.5 (RefCell and the Interior Mutability Pattern)
+- std docs: `Cell`, `RefCell::try_borrow_mut`, `OnceCell`, `std::sync::LazyLock`
 
 **Build.** `tasks/src/s05/t04_interior.rs`: `CallCounter` (`Cell<u64>`), `MemoFib` (`RefCell<BTreeMap<u64, u128>>` cache behind `&self`), `Config` with a `OnceCell<String>` lazily derived field, and `SharedLedger = Rc<RefCell<Ledger>>` with `transfer` that returns `Err(Busy)` instead of panicking on a re-entrant borrow.
 
@@ -137,15 +137,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Validators keep millions of accounts in memory. Knowing a struct's size, padding and whether `Option` costs a byte turns guesses into numbers. `Cow` lets an API borrow in the common case and allocate only when it must.
 
-**Read first**
-- The Rustonomicon: "Data Layout" (repr(Rust), repr(C), exotically sized types)
-- Rust Performance Book: "Type Sizes"
-- std docs: `std::mem::{size_of, align_of}`, `std::borrow::Cow`, `std::num::NonZeroU64`
-
-**Lesson** (`scripts/run.sh S5-T5 learn`)
+**Probes**
 - Size, alignment and padding; field reordering under `repr(Rust)` vs fixed order under `repr(C)`
 - Niche optimization: `size_of::<Option<Box<T>>>() == size_of::<Box<T>>()`, `Option<NonZeroU64>`, `Option<&T>`
 - `Cow<'a, str>`: an `escape` that clones every time vs one that returns `Cow::Borrowed` when nothing changes
+
+**Reference** (read after the probes, or when stuck)
+- The Rustonomicon: "Data Layout" (repr(Rust), repr(C), exotically sized types)
+- Rust Performance Book: "Type Sizes"
+- std docs: `std::mem::{size_of, align_of}`, `std::borrow::Cow`, `std::num::NonZeroU64`
 
 **Build.** `tasks/src/s05/t05_layout.rs`: `layout_report::<T>() -> Layout { size, align }`; three struct pairs (same fields, different order or repr) whose sizes you predict in doc comments; `AccountId(NonZeroU64)` with `Option<AccountId>` as 8 bytes; `normalize(&str) -> Cow<'_, str>` and `escape_memo(&str) -> Cow<'_, str>`.
 
@@ -168,15 +168,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Trees with shared nodes and back-references written as `Rc<RefCell<Node>>` become spaghetti: runtime borrow panics, cycles, no `Send`. The arena pattern stores nodes in one `Vec` and links them by index. It is how compilers (rustc), ECS engines and many VMs do it, and it is deterministic and cheap to clone or hash.
 
-**Read first**
-- "Arenas in Rust" (Manish Goregaokar), "Flattening ASTs" (Adrian Sampson)
-- Re-read your S5-T2, S5-T3, S5-T4 journals
-- `docs/adr/` template; you will write one
-
-**Lesson** (`scripts/run.sh S5-T6 learn`)
+**Probes**
 - The same expression tree as `Box<Expr>`, as `Rc<RefCell<Node>>`, and as `Vec<Node>` + `NodeId(u32)`; print size and count allocations for each
 - Typed indices (newtype `NodeId`) and why a stale or foreign index must be a typed error, not a panic
 - Tokenizer borrowing the source (`Token<'src>`), parser producing an arena, evaluator walking it
+
+**Reference** (read after the probes, or when stuck)
+- "Arenas in Rust" (Manish Goregaokar), "Flattening ASTs" (Adrian Sampson)
+- Re-read your S5-T2, S5-T3, S5-T4 journals
+- `docs/adr/` template; you will write one
 
 **Build.** `tasks/src/s05/t06_arena_interp.rs`: `tokenize(&str) -> Result<Vec<Token<'_>>, LexError>`; `Ast { nodes: Vec<Node> }` with `NodeId`; `parse(&[Token]) -> Result<(Ast, NodeId), ParseError>` for integers, `+ - * /`, parentheses, `let x = e in e` and variables; `eval(&Ast, NodeId) -> Result<i64, EvalError>` with checked arithmetic. ADR in `docs/adr/` on arena vs `Rc` tree.
 

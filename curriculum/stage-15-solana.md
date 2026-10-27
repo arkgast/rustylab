@@ -3,23 +3,23 @@
 **Phase:** V · Chains
 **Outcome:** You write Solana programs natively and with Anchor, validate every account by hand before trusting a framework to do it, test them in-process with LiteSVM and Mollusk, and deploy an escrow to devnet with a client that drives it.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
-All Stage 15 code lives in `labs/solana/`, outside the `tasks` crate: programs build for the SBF target with the Solana/Anza toolchain (`cargo build-sbf`) and Anchor has its own CLI. Use the crate and CLI versions current when you scaffold; `/start-task` resolves them.
+All Stage 15 code lives in `labs/solana/`, outside the `tasks` crate: programs build for the SBF target with the Solana/Anza toolchain (`cargo build-sbf`) and Anchor has its own CLI. Use the crate and CLI versions current when you scaffold; `/study` resolves them.
 
 ## S15-T1 · Programming model: accounts, owners, rent & PDAs
 *2 days (6 h)*
 
 **Why it matters.** Solana inverts your Stage 12 runtime: programs are stateless and all state lives in accounts passed in by the caller. Every Solana exploit starts with a program trusting an account it should have checked.
 
-**Read first**
-- solana.com/docs: "Core concepts" > Accounts, Transactions, Programs, Program Derived Addresses, Cross Program Invocation, Fees (compute units, rent)
-- Your S13-T1 journal (account models comparison)
-
-**Lesson** (`labs/solana/lessons/t01_model`, run with `cargo test -p t01_model -- --nocapture`)
+**Probes** (`labs/solana/lessons/t01_model`, run with `cargo test -p t01_model -- --nocapture`)
 - `AccountInfo`: key, `owner`, `lamports`, `data`, `is_signer`, `is_writable`, `executable`; only the owner may mutate data or debit lamports
 - Rent exemption: minimum balance for data length; why accounts are pre-sized
 - PDAs: `find_program_address(seeds, program_id)`, the bump, why PDAs are off-curve and can only "sign" via their program
+
+**Reference** (read after the probes, or when stuck)
+- solana.com/docs: "Core concepts" > Accounts, Transactions, Programs, Program Derived Addresses, Cross Program Invocation, Fees (compute units, rent)
+- Your S13-T1 journal (account models comparison)
 
 **Build.** `labs/solana/lessons/t01_model/src/lib.rs` katas against a LiteSVM instance: create and fund an account, transfer lamports via the System Program, derive a PDA and verify its bump, compute the rent-exempt minimum for 3 data sizes, and print each account's fields after every step.
 
@@ -43,15 +43,15 @@ All Stage 15 code lives in `labs/solana/`, outside the `tasks` crate: programs b
 
 **Why it matters.** Anchor hides the checks that matter most. Writing them by hand once is how you learn to audit Anchor code and to read the many production programs written natively or with Pinocchio.
 
-**Read first**
-- solana.com/docs: "Programs" > "Developing programs in Rust" (entrypoint, `process_instruction`)
-- `anza-xyz/pinocchio` README (zero-copy, `no_std` entrypoint); `solana-program` rustdocs for `AccountInfo`, `invoke_signed`
-- `borsh` docs (you used it in S11-T2)
-
-**Lesson** (`labs/solana/lessons/t02_native`, run with `cargo test -p t02_native -- --nocapture`)
+**Probes** (`labs/solana/lessons/t02_native`, run with `cargo test -p t02_native -- --nocapture`)
 - Entrypoint, instruction data as bytes, a Borsh-decoded instruction enum (your S12-T3 `Call` enum again)
 - Manual validation order: signer, writable, owner, PDA re-derivation with stored bump, discriminator / initialized flag
 - CPI with `invoke` and `invoke_signed` (PDA signer seeds) to the System Program to create an account
+
+**Reference** (read after the probes, or when stuck)
+- solana.com/docs: "Programs" > "Developing programs in Rust" (entrypoint, `process_instruction`)
+- `anza-xyz/pinocchio` README (zero-copy, `no_std` entrypoint); `solana-program` rustdocs for `AccountInfo`, `invoke_signed`
+- `borsh` docs (you used it in S11-T2)
 
 **Build.** `labs/solana/programs/counter-native/`: a counter program using `solana-program` or Pinocchio (justify in the journal) with `Initialize` (creates a PDA account per user via CPI), `Increment`, `Close` (returns lamports to the user); a typed error enum mapped to `ProgramError::Custom`.
 
@@ -75,14 +75,14 @@ All Stage 15 code lives in `labs/solana/`, outside the `tasks` crate: programs b
 
 **Why it matters.** Anchor is the dominant framework. Its `#[derive(Accounts)]` constraints are your S15-T2 checks expressed declaratively; knowing which constraint replaces which check is what separates using Anchor from auditing it.
 
-**Read first**
-- anchor-lang.com/docs: "Program structure", "Account constraints", "Program Derived Address", "Cross Program Invocation"
-- `coral-xyz/sealevel-attacks` (each insecure / secure / recommended triple)
-
-**Lesson** (`labs/solana/lessons/t03_anchor`, run with `anchor test` in that directory)
+**Probes** (`labs/solana/lessons/t03_anchor`, run with `anchor test` in that directory)
 - `#[program]`, `Context<T>`, `#[derive(Accounts)]`, `Account<'info, T>` (owner + discriminator check), `Signer`, `Program`
 - Constraints: `init`, `payer`, `space`, `seeds` + `bump`, `has_one`, `constraint = ...`, `close = target`, `mut`; `InitSpace`
 - CPI with `CpiContext::new` / `new_with_signer`; `#[error_code]` and `require!`
+
+**Reference** (read after the probes, or when stuck)
+- anchor-lang.com/docs: "Program structure", "Account constraints", "Program Derived Address", "Cross Program Invocation"
+- `coral-xyz/sealevel-attacks` (each insecure / secure / recommended triple)
 
 **Build.** `labs/solana/programs/counter-anchor/`: the S15-T2 counter rewritten in Anchor, plus a `transfer_authority` instruction using `has_one = authority`. In the journal, a table mapping each Anchor constraint to the manual S15-T2 check it replaces.
 
@@ -106,14 +106,14 @@ All Stage 15 code lives in `labs/solana/`, outside the `tasks` crate: programs b
 
 **Why it matters.** A test validator is slow and flaky. In-process SVMs give you fast, deterministic tests where you can forge any account state, which is exactly what you need to test attacks.
 
-**Read first**
-- solana.com/docs: "Tools" > LiteSVM; anchor-lang.com/docs "Testing" > LiteSVM and Mollusk
-- `anza-xyz/mollusk` README (`process_and_validate_instruction`, `Check`, compute-unit benches)
-
-**Lesson** (`labs/solana/lessons/t04_testing`, run with `cargo test -p t04_testing -- --nocapture`)
+**Probes** (`labs/solana/lessons/t04_testing`, run with `cargo test -p t04_testing -- --nocapture`)
 - Mollusk: single instruction, explicit accounts in, checks out; ideal for validation unit tests
 - LiteSVM: multi-instruction flows, clock/slot warping, `set_account` to forge state
 - Compute-unit budgets: measure, assert an upper bound, catch regressions (your S6-T5 benchmarks)
+
+**Reference** (read after the probes, or when stuck)
+- solana.com/docs: "Tools" > LiteSVM; anchor-lang.com/docs "Testing" > LiteSVM and Mollusk
+- `anza-xyz/mollusk` README (`process_and_validate_instruction`, `Check`, compute-unit benches)
 
 **Build.** `labs/solana/programs/counter-native/tests/` and `counter-anchor/tests/`: Mollusk tests for every validation path and LiteSVM tests for full flows, including forged accounts (wrong owner, fake PDA data with a correct discriminator) and a CU ceiling assertion.
 
@@ -137,14 +137,14 @@ All Stage 15 code lives in `labs/solana/`, outside the `tasks` crate: programs b
 
 **Why it matters.** Escrow combines PDAs as authorities, token CPIs, and account closing: the canonical Solana interview and audit exercise. Shipping it to devnet with a client proves the whole path.
 
-**Read first**
-- solana.com/docs: "Tokens" (SPL Token / Token-2022, associated token accounts); anchor-lang.com "SPL Token" CPI helpers
-- Security checklist sources: sealevel-attacks, Solana "Program security" docs, your S13-T2 vulnerability lab
-
-**Lesson** (`labs/solana/lessons/t05_escrow`, run with `anchor test`)
+**Probes** (`labs/solana/lessons/t05_escrow`, run with `anchor test`)
 - Escrow flow: `make` (deposit token A to a PDA-owned vault, record terms), `take` (atomically swap A for B), `refund`
 - Security checklist: signer checks, owner checks, account substitution (`has_one`, seeds), arithmetic, closing accounts and revival, mint/ATA validation, PDA sharing
 - Deploying: `solana config set --url devnet`, airdrop, `anchor deploy`, program ID and upgrade authority
+
+**Reference** (read after the probes, or when stuck)
+- solana.com/docs: "Tokens" (SPL Token / Token-2022, associated token accounts); anchor-lang.com "SPL Token" CPI helpers
+- Security checklist sources: sealevel-attacks, Solana "Program security" docs, your S13-T2 vulnerability lab
 
 **Build.** `labs/solana/programs/escrow/`: an Anchor escrow with `make`, `take`, `refund`; LiteSVM tests; `labs/solana/client/`: a TypeScript or Rust client that runs make/take on devnet; `labs/solana/SECURITY.md`: the checklist with how each item is enforced and tested.
 

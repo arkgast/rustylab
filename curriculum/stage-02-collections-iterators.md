@@ -3,21 +3,21 @@
 **Phase:** I · Fluency
 **Outcome:** You pick the right collection without thinking, write closures that capture exactly what they need, and turn any loop into an iterator pipeline (or back) while predicting what it prints and what it allocates.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
 ## S2-T1 · Vec, HashMap, HashSet & BTreeMap
 *1 day (3 h)*
 
 **Why it matters.** Every piece of state is a collection. `HashMap` iterates in a random order that changes between runs; if that order leaks into a hash, a state root or an event list, two honest nodes disagree and consensus breaks. That is why runtimes use ordered maps.
 
-**Read first**
-- The Rust Book ch. 8 (Common Collections)
-- std docs: `std::collections` module overview (the "When should you use which collection?" section), `HashMap::entry`, `Entry::or_insert`, `Entry::and_modify`, `BTreeMap::range`, `Vec::retain`, `Vec::dedup`
-
-**Lesson** (`scripts/run.sh S2-T1 learn`)
+**Probes**
 - `Vec` growth, capacity and `with_capacity`; `get` vs `[i]`; `retain`, `dedup`, `sort_unstable`, `binary_search`
 - The entry API: one lookup instead of `contains_key` + `insert` + `get_mut`; naive version side by side
 - `HashMap` vs `BTreeMap`: run the same insertions twice and print both iteration orders; `HashSet` set algebra (`union`, `intersection`, `difference`)
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 8 (Common Collections)
+- std docs: `std::collections` module overview (the "When should you use which collection?" section), `HashMap::entry`, `Entry::or_insert`, `Entry::and_modify`, `BTreeMap::range`, `Vec::retain`, `Vec::dedup`
 
 **Build.** `tasks/src/s02/t01_collections.rs`: eight katas:
 - `word_counts(text: &str) -> BTreeMap<String, u32>` (entry API)
@@ -50,14 +50,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Closures are the glue of iterator pipelines, callbacks and hooks. Knowing which trait a closure implements tells you what it captures and how often it can run, which is the same reasoning you apply to who may mutate state.
 
-**Read first**
-- The Rust Book ch. 13.1 (Closures)
-- std docs: `Fn`, `FnMut`, `FnOnce`; Rust Reference "Closure expressions" (capture modes)
-
-**Lesson** (`scripts/run.sh S2-T2 learn`)
+**Probes**
 - Capture by shared borrow, mutable borrow, or move; how the compiler picks; `move` keyword
 - `Fn` ⊂ `FnMut` ⊂ `FnOnce`: which bound to accept and why the loosest bound you can call wins
 - Passing closures (`impl Fn`, generic `F: Fn`) and returning them (`impl Fn`, `Box<dyn Fn>`)
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 13.1 (Closures)
+- std docs: `Fn`, `FnMut`, `FnOnce`; Rust Reference "Closure expressions" (capture modes)
 
 **Build.** `tasks/src/s02/t02_closures.rs`: seven katas:
 - `apply_twice<F: Fn(i64) -> i64>(f: F, x: i64) -> i64`
@@ -87,15 +87,15 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Iterators are how idiomatic Rust processes data: lazy, bounds-checked away, and as fast as a hand loop. Reading and writing pipelines fluently is the single biggest jump from "writes Rust" to "reads Rust codebases".
 
-**Read first**
-- The Rust Book ch. 13.2-13.4 (Iterators, performance)
-- std docs: `Iterator` trait page (read every provided method's one-line summary), `FromIterator`, `Peekable`, `slice::windows`, `slice::chunks`
-- Rust by Example: "Iterator::any", "Iterator::find", "Iterating over Results"
-
-**Lesson** (`scripts/run.sh S2-T3 learn`)
+**Probes**
 - Laziness: nothing runs until a consumer (`collect`, `sum`, `for`); `iter` vs `iter_mut` vs `into_iter`
 - Each adapter shown as a `for` loop and as a pipeline side by side, with printed output from both
 - `collect` is driven by the target type: `Vec`, `String`, `HashMap`, `BTreeMap`, `Result<Vec<_>, E>` (short-circuits on the first `Err`)
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 13.2-13.4 (Iterators, performance)
+- std docs: `Iterator` trait page (read every provided method's one-line summary), `FromIterator`, `Peekable`, `slice::windows`, `slice::chunks`
+- Rust by Example: "Iterator::any", "Iterator::find", "Iterating over Results"
 
 **Build.** `tasks/src/s02/t03_iterators.rs`: every kata has a `_loop` and an `_iter` version with the same signature (e.g. `sum_squares_loop`, `sum_squares_iter`); the tests run both.
 - Day 1: `sum_squares` (map, sum), `evens` (filter, collect), `parse_all_valid(&[&str]) -> Vec<i64>` (filter_map), `product_nonzero` (filter, product), `running_total` (scan), `dot` (zip, sum), `indexed_labels` (enumerate, String), `concat_all` (chain), `flatten_words` (flat_map), `leading_positives` (take_while), `after_header(lines: &[&str]) -> Vec<&str>` (skip_while)
@@ -123,14 +123,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Implementing `Iterator` once gives you all 70+ adapters for free. Custom iterators let a block, a storage prefix or a byte stream be consumed lazily, without materializing everything in memory.
 
-**Read first**
-- The Rust Book ch. 13.2 ("Creating Our Own Iterators" via the `Iterator` trait)
-- std docs: `Iterator::next`, `IntoIterator`, `std::iter::from_fn`, `std::iter::successors`, `DoubleEndedIterator`, `ExactSizeIterator`
-
-**Lesson** (`scripts/run.sh S2-T4 learn`)
+**Probes**
 - `impl Iterator for X { type Item; fn next }`: state lives in the struct
 - `IntoIterator` for owned, `&` and `&mut` forms so `for x in &coll` works
 - Quick iterators without a struct: `from_fn`, `successors`, `repeat_with`
+
+**Reference** (read after the probes, or when stuck)
+- The Rust Book ch. 13.2 ("Creating Our Own Iterators" via the `Iterator` trait)
+- std docs: `Iterator::next`, `IntoIterator`, `std::iter::from_fn`, `std::iter::successors`, `DoubleEndedIterator`, `ExactSizeIterator`
 
 **Build.** `tasks/src/s02/t04_custom_iterators.rs`: six katas:
 - `Fibonacci` (stops at `u64` overflow with `checked_add`, no panic)
@@ -160,14 +160,14 @@ Each task: run the lesson, solve the katas, run them and read the output, make t
 
 **Why it matters.** Real tooling reads a log of transactions and answers questions: who is busiest, what is the volume per block, which accounts went negative. This combines collections, closures and pipelines on data with a fixed, deterministic output.
 
-**Read first**
-- Re-read your S2-T1..T4 journals
-- std docs: `str::lines`, `str::split`, `std::env::args`, `std::fs::read_to_string`
-
-**Lesson** (`scripts/run.sh S2-T5 learn`)
+**Probes**
 - Parse a line-based format into a `Vec<Tx>`; keep parsing and analysis separate
 - One pass vs many passes: when a single `fold` beats five pipelines, and when it does not
 - Deterministic report output: sort keys, fixed formatting, no `HashMap` iteration in output
+
+**Reference** (read after the probes, or when stuck)
+- Re-read your S2-T1..T4 journals
+- std docs: `str::lines`, `str::split`, `std::env::args`, `std::fs::read_to_string`
 
 **Build.** `tasks/src/s02/t05_analytics.rs`: `Tx { block: u64, from: String, to: String, amount: u64 }`, `parse_txs(&str) -> Result<Vec<Tx>, ParseError>` (format: `block,from,to,amount`), and an `Analytics` set: `volume_per_block`, `top_senders(n)`, `net_flows -> BTreeMap<String, i128>`, `largest_tx`, `accounts_seen -> BTreeSet<String>`, `blocks_with_volume_over(threshold)`, `report() -> String`.
 

@@ -3,23 +3,23 @@
 **Phase:** V · Chains
 **Outcome:** You write Soroban contracts that use the right storage tier, manage TTL deliberately, enforce authorization with `require_auth`, implement the SEP-41 token interface, and deploy and invoke a contract on testnet with `stellar-cli`.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
-All Stage 16 code lives in `labs/soroban/`, its own Cargo workspace outside the `tasks` crate: contracts build to `wasm32v1-none` (or the target current when you scaffold) with `stellar contract build`. Use the `soroban-sdk` and `stellar-cli` versions current when you scaffold; `/start-task` resolves them.
+All Stage 16 code lives in `labs/soroban/`, its own Cargo workspace outside the `tasks` crate: contracts build to `wasm32v1-none` (or the target current when you scaffold) with `stellar contract build`. Use the `soroban-sdk` and `stellar-cli` versions current when you scaffold; `/study` resolves them.
 
 ## S16-T1 · Soroban model: Env, storage tiers, TTL & auth
 *2 days (6 h)*
 
 **Why it matters.** Soroban is the closest of the three chains to your Stage 10 metered WASM sandbox: a host (`soroban-env-host`) exposes typed host functions to a `no_std` guest. Its twist is state archival: every entry has a TTL and rent, so storage design is a cost and liveness decision.
 
-**Read first**
-- developers.stellar.org: "Smart contracts" > "Getting started" (setup, hello world), "Learn" > "Fundamentals": Contract storage, State archival, Authorization, Fees and metering
-- soroban-sdk rustdocs: `Env`, `contract`, `contractimpl`, `contracttype`, `storage::{Instance, Persistent, Temporary}`, `Address::require_auth`
-
-**Lesson** (`labs/soroban/lessons/t01_model`, run with `cargo test -p t01_model -- --nocapture`)
+**Probes** (`labs/soroban/lessons/t01_model`, run with `cargo test -p t01_model -- --nocapture`)
 - `#[contract]`, `#[contractimpl]`, `Env` as the handle to the host; host types (`Symbol`, `Vec`, `Map`, `Bytes`) vs Rust std; `#![no_std]` (your S10-T3)
 - Storage tiers: instance (lives with the contract), persistent (archivable, restorable), temporary (deleted on expiry); `extend_ttl(threshold, extend_to)`
 - `require_auth` / `require_auth_for_args` and the auth tree; `env.mock_all_auths()` and `env.auths()` in tests
+
+**Reference** (read after the probes, or when stuck)
+- developers.stellar.org: "Smart contracts" > "Getting started" (setup, hello world), "Learn" > "Fundamentals": Contract storage, State archival, Authorization, Fees and metering
+- soroban-sdk rustdocs: `Env`, `contract`, `contractimpl`, `contracttype`, `storage::{Instance, Persistent, Temporary}`, `Address::require_auth`
 
 **Build.** `labs/soroban/contracts/notes/`: a contract where an `Address` writes a note (persistent), a global note counter (instance) and a rate-limit marker (temporary); each write calls `require_auth` and extends TTL; a `#[contracterror]` enum.
 
@@ -43,15 +43,15 @@ All Stage 16 code lives in `labs/soroban/`, its own Cargo workspace outside the 
 
 **Why it matters.** SEP-41 is the token interface every Stellar wallet and DEX speaks, and Stellar Asset Contracts implement it for classic assets. Writing one makes you handle allowances with expiry, auth on every mutating call and events, the same concerns as your S14 registry and S15 vault.
 
-**Read first**
-- Stellar SEP-41 (Soroban Token Interface) on `stellar/stellar-protocol`
-- developers.stellar.org: "Tokens" (Stellar Asset Contract, token interface); soroban-sdk `token::TokenInterface`, `testutils`
-- `stellar/soroban-examples`: `token`
-
-**Lesson** (`labs/soroban/lessons/t02_token`, run with `cargo test -p t02_token -- --nocapture`)
+**Probes** (`labs/soroban/lessons/t02_token`, run with `cargo test -p t02_token -- --nocapture`)
 - `TokenInterface`: `balance`, `transfer`, `approve(from, spender, amount, expiration_ledger)`, `transfer_from`, `burn`; `i128` amounts
 - Events with `env.events().publish(...)` (or the `#[contractevent]` form current at scaffold time) and asserting them in tests
 - Testutils: `Address::generate`, `register` a contract, ledger manipulation, cross-contract calls to the Stellar Asset Contract
+
+**Reference** (read after the probes, or when stuck)
+- Stellar SEP-41 (Soroban Token Interface) on `stellar/stellar-protocol`
+- developers.stellar.org: "Tokens" (Stellar Asset Contract, token interface); soroban-sdk `token::TokenInterface`, `testutils`
+- `stellar/soroban-examples`: `token`
 
 **Build.** `labs/soroban/contracts/token/`: a SEP-41 token with admin `mint`, allowances with expiry stored in temporary storage, balances in persistent storage with TTL extension, and at least 12 tests.
 
@@ -75,14 +75,14 @@ All Stage 16 code lives in `labs/soroban/`, its own Cargo workspace outside the 
 
 **Why it matters.** Testnet deployment exercises what unit tests cannot: real fees, footprints, simulation, TTL in wall-clock ledgers, and authorization signed by real keys.
 
-**Read first**
-- developers.stellar.org: "Getting started" > "Deploy to Testnet"; `stellar-cli` reference (`keys`, `contract build|deploy|invoke|bindings`)
-- `stellar/soroban-examples`: `timelock`, `atomic_swap`
-
-**Lesson** (`labs/soroban/README.md` walkthrough, run with `stellar contract invoke --network testnet ...`)
+**Probes** (`labs/soroban/README.md` walkthrough, run with `stellar contract invoke --network testnet ...`)
 - `stellar keys generate <name> --network testnet --fund`; `stellar contract deploy --wasm ... --alias ...`
 - Simulation, footprints and resource fees; why every invoke is simulated first
 - Invoking with `-- <fn> --help` (the CLI reads the interface embedded in the WASM); generating TypeScript or Rust bindings
+
+**Reference** (read after the probes, or when stuck)
+- developers.stellar.org: "Getting started" > "Deploy to Testnet"; `stellar-cli` reference (`keys`, `contract build|deploy|invoke|bindings`)
+- `stellar/soroban-examples`: `timelock`, `atomic_swap`
 
 **Build.** `labs/soroban/contracts/vesting/`: a vesting escrow: `create(funder, beneficiary, token, total, start, cliff, duration)` pulls tokens via the token client; `claim(beneficiary)` releases the vested amount (integer math only, no floats); `revoke(admin)` returns unvested funds. Tests with ledger-time advancement; a `labs/soroban/scripts/demo.sh` that deploys to testnet and runs create and claim.
 

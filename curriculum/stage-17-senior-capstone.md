@@ -3,23 +3,23 @@
 **Phase:** V · Chains
 **Outcome:** You read and explain a production chain codebase, land a reviewed upstream contribution, and ship a tested, self-audited, testnet-deployed project on your primary chain, then defend its design in a senior-level architecture review.
 
-Each task: run the lesson, solve the katas, run them and read the output, make the gate green, write the journal, then `/task-review <ID>`.
+Each task: `/study` (recall, then probes: predict, run, explain the gap), solve the katas, run them and read the output, make the gate green, write the journal, then `/review <ID>`.
 
-Stage 17 has no fixed gate tests in `tasks/`; acceptance is the artifacts below, reviewed by `/task-review`. Code lives in `labs/<chain>/` (from Stages 14-16) or `labs/final/`, and documents in `docs/`.
+Stage 17 has no fixed gate tests in `tasks/`; acceptance is the artifacts below, reviewed by `/review`. Code lives in `labs/<chain>/` (from Stages 14-16) or `labs/final/`, and documents in `docs/`.
 
 ## S17-T1 · Reading a production chain codebase
 *3 days (9 h)*
 
 **Why it matters.** Senior engineers spend more time reading code than writing it. Production chain code is where your Stage 12 toy becomes real: the same ideas, plus a decade of edge cases, performance work and security fixes.
 
-**Read first**
-- Pick one: `paritytech/polkadot-sdk` `substrate/frame/balances` (with `frame/support/src/traits/tokens`), `anza-xyz/agave` `runtime/src/bank.rs` (and `svm/`), or `stellar/rs-soroban-env` `soroban-env-host`
-- That project's CONTRIBUTING guide and architecture docs; your S12 and S13 journals
-
-**Lesson** (`docs/reading-guide.md` in this repo; no code to run beyond the project's own tests)
+**Probes** (`docs/reading-guide.md` in this repo; no code to run beyond the project's own tests)
 - Reading strategy: start from a public entry point (a dispatchable, `Bank::process_transaction`, a host function) and trace one call end to end
 - Tools: `rust-analyzer` go-to-definition, `cargo doc --open`, `git log -S`/`git blame` to find why code exists, running one upstream test with `--nocapture`
 - Write for a reader: diagrams of data flow, invariants stated explicitly, links pinned to a commit hash
+
+**Reference** (read after the probes, or when stuck)
+- Pick one: `paritytech/polkadot-sdk` `substrate/frame/balances` (with `frame/support/src/traits/tokens`), `anza-xyz/agave` `runtime/src/bank.rs` (and `svm/`), or `stellar/rs-soroban-env` `soroban-env-host`
+- That project's CONTRIBUTING guide and architecture docs; your S12 and S13 journals
 
 **Build.** `docs/architecture/<project>.md`: a guided architecture doc (2000-4000 words) covering module map, one traced call path with file:line links pinned to a commit, the key invariants and how they are enforced, error and fee handling, and a "compare with my S12 runtime" section. Plus one upstream test you ran and modified locally, described in the journal.
 
@@ -43,14 +43,14 @@ Stage 17 has no fixed gate tests in `tasks/`; acceptance is the artifacts below,
 
 **Why it matters.** Merged upstream code is the strongest signal of seniority you can show: it proves you can read unfamiliar code, meet a project's standards and work through review with maintainers you do not control.
 
-**Read first**
-- Target project's CONTRIBUTING.md, code of conduct, PR template and CI docs
-- Issues labeled `good first issue`, `help wanted`, `C1-mentor`/`D0-easy` (polkadot-sdk), or docs/test gaps in Anchor, LiteSVM, soroban-sdk, stellar-cli or similar
-
-**Lesson** (`docs/upstream-playbook.md` in this repo; run the target project's CI locally)
+**Probes** (`docs/upstream-playbook.md` in this repo; run the target project's CI locally)
 - Choosing scope: small, real and reviewable; comment on the issue before writing code
 - Matching project style: `rustfmt`/clippy config, commit conventions, changelog or prdoc files (polkadot-sdk uses `prdoc/`)
 - The review loop: respond to every comment, push fixups, never argue without evidence, keep the PR rebased
+
+**Reference** (read after the probes, or when stuck)
+- Target project's CONTRIBUTING.md, code of conduct, PR template and CI docs
+- Issues labeled `good first issue`, `help wanted`, `C1-mentor`/`D0-easy` (polkadot-sdk), or docs/test gaps in Anchor, LiteSVM, soroban-sdk, stellar-cli or similar
 
 **Build.** A pull request to a real Rust blockchain project (code fix, test, or substantive docs improvement) and `docs/upstream/<project>-<pr-number>.md`: the issue, your approach, the diff summary, every review round with what changed and why, and the outcome.
 
@@ -74,14 +74,14 @@ Stage 17 has no fixed gate tests in `tasks/`; acceptance is the artifacts below,
 
 **Why it matters.** This is your portfolio piece: one chain chosen deliberately, built to production standards, with the design, tests and threat model a hiring team or auditor expects.
 
-**Read first**
-- Your S14, S15 or S16 capstone, journals and gate feedback for the chain you pick
-- That chain's security guidance (FRAME: weights, bounded storage, migrations; Solana: sealevel-attacks, program security docs; Soroban: auth, storage/TTL, resource limits)
-
-**Lesson** (`docs/final/README.md` in this repo; run with the chain's own tooling)
+**Probes** (`docs/final/README.md` in this repo; run with the chain's own tooling)
 - Pick a primary chain (Polkadot, Solana or Stellar) and justify it in an ADR: career goal, ecosystem, what you are best at
 - Design doc first: problem, actors, state, instructions/calls, invariants, threat model, upgrade story
 - Ship small: walking skeleton on testnet by day 2, then features, then audit and polish
+
+**Reference** (read after the probes, or when stuck)
+- Your S14, S15 or S16 capstone, journals and gate feedback for the chain you pick
+- That chain's security guidance (FRAME: weights, bounded storage, migrations; Solana: sealevel-attacks, program security docs; Soroban: auth, storage/TTL, resource limits)
 
 **Build.** `labs/final/`: a non-trivial project on your primary chain (e.g. a multisig treasury, streaming payments, an auction, or an on-chain registry with fees), plus `docs/adr/NNNN-primary-chain.md`, `docs/final/design.md`, `docs/final/security-audit.md` (self-audit in the S13-T4 format with findings and fixes), and a deployed testnet (Paseo/Westend parachain or local network if testnet access is unavailable, Solana devnet, or Stellar testnet) demo with a client script.
 
