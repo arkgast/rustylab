@@ -4,8 +4,9 @@ A structured, deadline-driven path from re-learning Rust to senior Rust
 engineering, and from there to blockchain engineering on **Polkadot, Solana
 and Stellar**.
 
-Every concept is learned the same way: read a little, **run a lesson and watch
-its output**, solve katas and run them, pass the gate, explain your answers.
+Every concept is learned the same way: **predict what a snippet prints, run it
+and see the gap**, then solve katas and run them, pass the gate, explain your
+answers.
 
 ## The plan at a glance
 
@@ -34,23 +35,26 @@ its output**, solve katas and run them, pass the gate, explain your answers.
 | | 16 Stellar & Soroban | write and deploy Soroban contracts |
 | | 17 Senior capstone | read production chain code, contribute upstream, defend a final project |
 
-## How to work a task
+## A study day
 
-```sh
-python3 scripts/roadmap.py status     # what is next and whether you are late
-# in Claude Code:
-/start-task S1-T1                     # theory + a runnable lesson
-scripts/run.sh S1-T1 learn            # run the lesson, tweak it, run again
-# replace the todo!()s in tasks/src/s01/t01_basics.rs
-scripts/run.sh S1-T1                  # see your katas' results (⏳ = not done yet)
-scripts/gate.sh S1-T1                 # fmt, clippy, tests, runner builds
-# write journal/S1-T1.md
-/task-review S1-T1                    # rubric + oral check; updates the roadmap on pass
+```text
+/study                      # opens today: 2-3 recall questions, then probes or build
+                            #   a probe: predict, it runs, you see the gap
+scripts/run.sh probe        # rerun the tutor's snippet after you change it
+scripts/run.sh S1-T1        # your katas (⏳ = todo!())
+scripts/run.sh playground   # your scratch file
+scripts/gate.sh S1-T1       # fmt, clippy, fixed tests, own tests
+journal/S1-T1.md            # your words; the close message tells you what surprised you
+/review S1-T1               # oral check + rubric; the only thing that moves the roadmap
+/study close                # or just say "done": logs the day, queues tomorrow's recall
 ```
 
-`scripts/run.sh playground` runs `tasks/examples/playground.rs`, your scratch
-file for experiments.
+In chat: hint · skip · show me (costs points) · break · done
 
+Sunday: /study runs only repetition. Rest 10-20 minutes after every close; sleep is
+where today's misses become tomorrow's recall.
+
+`python3 scripts/roadmap.py status` shows what is next and whether you are late.
 Full rules, rubric and integrity policy: [`curriculum/README.md`](curriculum/README.md).
 
 ## Repository layout
@@ -59,10 +63,11 @@ Full rules, rubric and integrity policy: [`curriculum/README.md`](curriculum/REA
 |------|------------|
 | `ROADMAP.md` | Tracker: status, due dates, scores (updated only by reviews) |
 | `curriculum/` | Stage specs and the rules of the game |
-| `tasks/` | Your exercises (`src/`), runners and lessons (`examples/`), fixed gate tests (`tests/`) |
+| `tasks/` | Your exercises (`src/`), runners, the tutor's probe and your playground (`examples/`), fixed gate tests (`tests/`) |
 | `labs/` | Separate crates for later stages (async, macros, WASM, runtime, chains) |
 | `journal/` | Your notes and checkpoint answers per task |
-| `scripts/` | `run.sh`, `gate.sh`, `roadmap.py` |
+| `.study/` | Tutor state: today's session, the recall queue, per-task logs (written by `/study` and `/review`) |
+| `scripts/` | `run.sh`, `gate.sh`, `roadmap.py`, `clock.sh` (session clock the tutor checks for the break cue) |
 | `docs/` | ADRs, audits and write-ups you produce along the way |
 
 Earlier experiments (`calculator`, `guessing_game`, `state_machine`) are
