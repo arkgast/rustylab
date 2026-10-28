@@ -5,6 +5,7 @@
 
 fn main() {
     let words = ["ownership", "borrowing", "lifetimes"];
-    let lengths: Vec<usize> = words.iter().map(|w| w.len()).collect();
-    println!("{words:?} -> {lengths:?}");
+    for word in words {
+        println!("{word} has {} letters", word.len());
+    }
 }
