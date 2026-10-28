@@ -199,7 +199,7 @@ fn rule_no_indexing() {
                 && (before.is_ascii_alphanumeric() || matches!(before, b'_' | b')' | b']'));
             assert!(
                 !is_index,
-                "line {n}: indexing can panic, use .get() or iterators:\n    {}",
+                "line {n}: indexing can panic, use a slice pattern or a for loop:\n    {}",
                 line.trim()
             );
         }

@@ -83,7 +83,11 @@ fn min_max() {
 
 #[test]
 fn rule_no_as_casts() {
-    common::assert_absent(SRC, " as ", "use From/u64::from or pick the right type");
+    common::assert_absent(
+        SRC,
+        " as ",
+        "widen with u64::from(x) or pick the right type",
+    );
 }
 
 #[test]
