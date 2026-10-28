@@ -1,7 +1,10 @@
 //! Runner for S1-T5.
 //!   scripts/run.sh S1-T5            scripted session
 //!   scripts/run.sh S1-T5 -- repl    type commands yourself (Ctrl-D to quit)
-use std::io::{self, BufRead, Write};
+//!
+//! Lines marked `// harness` are plumbing you can treat as a black box
+//! (keyboard input, argument checks, column padding); they are taught later.
+use std::io::{self, BufRead, Write}; // harness
 
 use tasks::lab::kata;
 use tasks::s01::t05_ledger::{Command, Ledger};
@@ -23,6 +26,7 @@ const SCRIPT: &[&str] = &[
 ];
 
 fn step(ledger: &mut Ledger, line: &str) {
+    // harness: `{line:<24}` pads the command to 24 columns.
     match Command::parse(line) {
         Err(e) => println!("  {line:<24} ✗ parse error: {e:?}"),
         Ok(cmd) => match ledger.execute(cmd) {
@@ -33,6 +37,7 @@ fn step(ledger: &mut Ledger, line: &str) {
 }
 
 fn main() {
+    // harness: is `repl` one of the program's arguments?
     if std::env::args().any(|a| a == "repl") {
         repl();
         return;
@@ -46,6 +51,7 @@ fn main() {
     });
 }
 
+// harness: reads one command per line from the keyboard until Ctrl-D.
 fn repl() {
     println!("ledger repl: open | deposit | withdraw | transfer | balance  (Ctrl-D quits)");
     let mut ledger = Ledger::new();

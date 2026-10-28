@@ -20,7 +20,7 @@ fn main() {
         show!(Direction::East.opposite());
     });
     kata("Position::step", || {
-        let mut p = Position::default();
+        let mut p = Position { x: 0, y: 0 };
         for (dir, steps) in [
             (Direction::North, 3),
             (Direction::East, 2),
@@ -36,16 +36,14 @@ fn main() {
         show!(Coin::from_cents(3));
     });
     kata("Command::describe", || {
-        let commands = [
-            Command::Move {
-                dir: Direction::West,
-                steps: 2,
-            },
-            Command::Say("hello".to_string()),
-            Command::Quit,
-        ];
-        for c in &commands {
-            println!("  {c:?} => {}", c.describe());
-        }
+        let mv = Command::Move {
+            dir: Direction::West,
+            steps: 2,
+        };
+        println!("  {mv:?} => {}", mv.describe());
+        let say = Command::Say(String::from("hello"));
+        println!("  {say:?} => {}", say.describe());
+        let quit = Command::Quit;
+        println!("  {quit:?} => {}", quit.describe());
     });
 }

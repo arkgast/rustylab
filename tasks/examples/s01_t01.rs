@@ -4,8 +4,11 @@ use tasks::{lab::kata, show};
 
 fn main() {
     kata("fizzbuzz", || {
-        let line: Vec<String> = (1..=15).map(fizzbuzz).collect();
-        println!("  1..=15 => {}", line.join(" "));
+        let mut line = String::from("  1..=15 =>");
+        for n in 1..=15 {
+            line = format!("{line} {}", fizzbuzz(n));
+        }
+        println!("{line}");
     });
     kata("grade", || {
         for score in [100, 85, 72, 64, 12, 150] {
@@ -17,8 +20,13 @@ fn main() {
         show!(sum_of_digits(u64::MAX));
     });
     kata("is_prime", || {
-        let primes: Vec<u32> = (0..40).filter(|&n| is_prime(n)).collect();
-        println!("  primes below 40 => {primes:?}");
+        let mut primes = String::from("  primes below 40 =>");
+        for n in 0..40 {
+            if is_prime(n) {
+                primes = format!("{primes} {n}");
+            }
+        }
+        println!("{primes}");
         show!(is_prime(4_294_967_291));
     });
     kata("next_power_of_two", || {

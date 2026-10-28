@@ -54,6 +54,7 @@ impl Direction {
 }
 
 /// A point on a grid. North is +y, East is +x.
+// preview: Default, taught in S1-T3 (the tests start at `Position::default()`, the origin).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Position {
     pub x: i32,

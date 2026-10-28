@@ -19,7 +19,7 @@ pub fn grade(_score: u8) -> char {
 }
 
 /// Sum of the decimal digits: `sum_of_digits(1234) == 10`, `sum_of_digits(0) == 0`.
-pub fn sum_of_digits(_n: u64) -> u32 {
+pub fn sum_of_digits(_n: u64) -> u64 {
     todo!()
 }
 
@@ -40,6 +40,9 @@ pub fn next_power_of_two(_n: u32) -> u64 {
 /// `(checked, wrapping, saturating, overflowing)`.
 ///
 /// `overflow_modes(250, 10) == (None, 4, 255, (4, true))`
+///
+/// Preview: `Option` is taught in S1-T2. `checked_add` returns `Some(sum)`,
+/// or `None` ("no value") when the sum does not fit; pass it through as is.
 pub fn overflow_modes(_a: u8, _b: u8) -> (Option<u8>, u8, u8, (u8, bool)) {
     todo!()
 }
