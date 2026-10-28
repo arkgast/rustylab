@@ -15,6 +15,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Attributes: `rename_all`, `tag`/`content`/`untagged`, `default`, `skip_serializing_if`, `deny_unknown_fields`, `with`
 - Zero-copy: `#[serde(borrow)] &'a str` vs `String`, allocation counts printed side by side
 
+*Previews:* Allocation counts come from the counting allocator in `tasks/src/lab.rs` (harness).
+
 **Reference** (read after the probes, or when stuck)
 - serde.rs: "Data model", "Attributes" (container, variant, field), "Implementing Serialize", "Implementing Deserialize", "Deserializer lifetimes"
 - serde_json docs: `from_str`, `Value`, `RawValue`
@@ -188,7 +190,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - [ ] A rejected tx never changes the nonce tracker
 - [ ] ADR written in `docs/adr/`
 
-**Stretch.** Fuzz `decode` + `verify` with `cargo fuzz` for 10 minutes; record the corpus size.
+**Stretch.** Fuzz `decode` + `verify` with `cargo fuzz` for 10 minutes (a preview: fuzzing is taught in S13-T3); record the corpus size.
 
 **Checkpoint questions** (answer in `journal/S11-T6.md`; the reviewer asks them again)
 1. How does the `CheckedTx` typestate make "forgot to verify" a compile error?

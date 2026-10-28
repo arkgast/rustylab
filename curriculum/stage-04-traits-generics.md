@@ -15,6 +15,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - What each derive generates; derived `Ord` compares fields in declaration order (field order is API)
 - Manual `PartialEq`/`Ord`/`Hash` that must agree: a broken impl next to a correct one, with a `BTreeSet` printout showing the damage
 
+*Previews:* `other: &impl Shape` and `fn hash<H: Hasher>(..)` use generic syntax taught in S4-T2; read them as "any type that implements the trait".
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 10.2 (Traits), Appendix C (Derivable Traits)
 - std docs: `PartialEq`/`Eq`, `PartialOrd`/`Ord` (read the "consistency" requirements), `Hash` (the `k1 == k2 -> hash(k1) == hash(k2)` rule), `Default`, `Debug`, `Display`
@@ -90,6 +92,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `&dyn Trait` and `Box<dyn Trait>`: fat pointers (data + vtable); print `size_of` for `&T` vs `&dyn Trait`
 - Static vs dynamic dispatch side by side: `fn run<H: Handler>(h: &H)` vs `fn run(h: &dyn Handler)`
 - Dyn compatibility: why generic methods or `-> Self` break it, and the `where Self: Sized` escape hatch
+
+*Previews:* `std::mem::size_of::<T>()` appears only for the fat-pointer comparison; size, alignment and layout are S5-T5.
 
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 18.2 (Using Trait Objects That Allow for Values of Different Types)

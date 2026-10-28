@@ -113,6 +113,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Retry policy: which errors are retryable, exponential backoff with jitter, and why non-idempotent calls (submit tx) must not blindly retry
 - Testing against a mock server with injected faults: delay, drop, malformed JSON, wrong `id`
 
+*Previews:* Serde is used at the basics level (`#[derive(Serialize, Deserialize)]`, `serde_json::{to_string, from_str, Value}`, `untagged` / `tag`); its data model and custom impls are S11-T1.
+
 **Reference** (read after the probes, or when stuck)
 - JSON-RPC 2.0 specification (whole thing, it is short)
 - tokio tutorial "Framing"; serde docs: "Enum representations" (`untagged`, `tag`)

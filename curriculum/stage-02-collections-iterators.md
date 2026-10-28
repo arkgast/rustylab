@@ -15,6 +15,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - The entry API: one lookup instead of `contains_key` + `insert` + `get_mut`; naive version side by side
 - `HashMap` vs `BTreeMap`: run the same insertions twice and print both iteration orders; `HashSet` set algebra (`union`, `intersection`, `difference`)
 
+*Previews:* `retain` takes a closure (`|x| ..`, taught in S2-T2): use it as a recipe. `union` / `intersection` / `difference` return iterators: drive them with a `for` loop (adapters are S2-T3). For `top_n`, sort a `Vec<(key, value)>` with plain `sort()`, since tuples order lexicographically; `sort_by_key` arrives in S2-T2.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 8 (Common Collections)
 - std docs: `std::collections` module overview (the "When should you use which collection?" section), `HashMap::entry`, `Entry::or_insert`, `Entry::and_modify`, `BTreeMap::range`, `Vec::retain`, `Vec::dedup`
@@ -55,6 +57,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `Fn` ⊂ `FnMut` ⊂ `FnOnce`: which bound to accept and why the loosest bound you can call wins
 - Passing closures (`impl Fn`, generic `F: Fn`) and returning them (`impl Fn`, `Box<dyn Fn>`)
 
+*Previews:* The katas write generic parameters (`<F: Fn(i64) -> i64>`, `<A, B, C>`, `<T, E>`) and `Box<dyn Fn(&Tx) -> bool>` as closure recipes; generics proper are S4-T2, `dyn` S4-T3, `Box` S5-T3.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 13.1 (Closures)
 - std docs: `Fn`, `FnMut`, `FnOnce`; Rust Reference "Closure expressions" (capture modes)
@@ -92,6 +96,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Each adapter shown as a `for` loop and as a pipeline side by side, with printed output from both
 - `collect` is driven by the target type: `Vec`, `String`, `HashMap`, `BTreeMap`, `Result<Vec<_>, E>` (short-circuits on the first `Err`)
 
+*Previews:* `std::cmp::Ordering` and `a.cmp(&b)` are used as values inside `min_by`; implementing `Ord` is S4-T1.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 13.2-13.4 (Iterators, performance)
 - std docs: `Iterator` trait page (read every provided method's one-line summary), `FromIterator`, `Peekable`, `slice::windows`, `slice::chunks`
@@ -127,6 +133,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `impl Iterator for X { type Item; fn next }`: state lives in the struct
 - `IntoIterator` for owned, `&` and `&mut` forms so `for x in &coll` works
 - Quick iterators without a struct: `from_fn`, `successors`, `repeat_with`
+
+*Previews:* `type Item` is written as a recipe (associated types are S4-T4); `Pairs<'a, T>`, `impl<'a> IntoIterator for &'a Ledger` and `std::slice::Iter<'a, T>` put `'a` exactly where the compiler asks (named lifetimes are S5-T1).
 
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 13.2 ("Creating Our Own Iterators" via the `Iterator` trait)

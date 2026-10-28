@@ -15,6 +15,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `let`, `mut`, shadowing, `const`; scalar and compound types; `as` casts and why they are dangerous
 - Expressions vs statements, `if` as an expression, `loop` with `break value`, labeled loops, `for` over ranges
 
+*Previews:* `overflow_modes` returns `Option<u8>` (taught in S1-T2); read `None` as "no value" and pass it through.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 1-3 (skim what you know; read 3.2 "Data Types" carefully)
 - std docs: `u8::checked_add`, `wrapping_add`, `saturating_add`, `overflowing_add`
@@ -25,7 +27,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s01_t01.rs` pass
-- [ ] No `as` casts in the source file (use `From`/`u64::from` or change types)
+- [ ] No `as` casts in the source file (widen with the method `u64::from(x)`, or pick the right type)
 - [ ] `next_power_of_two` uses `loop` with `break <value>`
 - [ ] `grade` is a single `match` with range patterns
 
@@ -45,6 +47,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Named, tuple and unit structs; `impl` blocks; `&self` vs `&mut self` vs `self`; associated functions (`new`)
 - Enums with data; `match` exhaustiveness; `if let`; `Option<T>` as a plain enum
 - `#[derive(Debug, Clone, Copy, PartialEq, Eq)]` and what each derive gives you
+
+*Previews:* `Position` also derives `Default` (taught in S1-T3); the tests start from `Position::default()`, the origin.
 
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 5 (Structs) and ch. 6 (Enums and Pattern Matching)
@@ -119,7 +123,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - [ ] `truncate_chars` never panics on any input and never splits a code point
 - [ ] `rotate_left` works in place (no new `Vec`)
 
-**Stretch.** Re-implement `count_words` and `largest` without any loop (peek at Stage 2: `split_whitespace().count()`, `iter().max()`).
+**Stretch.** Re-implement `count_words` without a loop, with the same `count()` you used in `chars().count()`. Then peek at Stage 2 (a preview, not reviewed): `largest` as `xs.iter().max().copied()`.
 
 **Checkpoint questions** (answer in `journal/S1-T4.md`; the reviewer asks them again)
 1. State the rule `&mut T` enforces in terms of aliasing and mutation, and the bug class it prevents.
@@ -133,8 +137,10 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Probes**
 - Parse, then execute: why the two steps get separate error types
-- `Result<T, E>` with an enum error, `?` for early return, `match` on results
+- `Result<T, E>` with an enum error, `?` for early return (same error type on both sides; the conversion behind `?` is S3-T2), `match` on results
 - "Validate everything, then mutate": keeping state unchanged on failure
+- Slice patterns as the no-index way to read words: push the words of `split_whitespace()` into a `Vec<&str>`, then `match words.as_slice() { [cmd, a] => .., [] => .., _ => .. }`
+- Tests in the source file: `#[cfg(test)] mod tests { use super::*; }`, `#[test]`, `assert!` / `assert_eq!`, and `cargo test -p tasks`
 
 **Reference** (read after the probes, or when stuck)
 - Re-read your S1-T1..T4 journals

@@ -15,6 +15,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `pub(crate)` and `pub(super)` vs everything-`pub`: what leaks into docs and semver
 - Features are additive and unified across the graph: why `default-features = false`, `dep:` syntax and `#[cfg(feature = "...")]` must never remove an API
 
+*Previews:* The `serde` feature only adds `#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]`; using serde is S8-T4, its data model S11-T1.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 7 (Packages, Crates, and Modules) and ch. 14.3 (Cargo Workspaces)
 - The Cargo Book: "Features" (especially "Feature unification" and "Mutually exclusive features")
@@ -43,7 +45,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 **Why it matters.** A senior engineer's code is used by others. Good APIs make misuse hard (typestate, newtypes, non-exhaustive enums) and evolve without breaking users. SDKs for chains live and die by this.
 
 **Probes**
-- A 9-argument constructor vs a builder; a builder that can be called out of order vs a typestate-lite builder (`TxBuilder<NoSigner>` -> `TxBuilder<Signed>`) where `build()` exists only on the final state
+- A 9-argument constructor vs a builder; a builder that can be called out of order vs a typestate-lite builder (`TxBuilder<NoSigner>` -> `TxBuilder<Signed>`, zero-sized markers held in `std::marker::PhantomData<S>`) where `build()` exists only on the final state
 - Breaking vs non-breaking: adding a field to a pub struct, a variant to an enum, a method to a trait; `#[non_exhaustive]` and sealed traits
 - Doc comments that compile: `# Examples`, `# Errors`, hidden `?` setup lines
 

@@ -49,6 +49,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - The cursor pattern: `fn take<'a>(input: &mut &'a [u8], n: usize) -> Result<&'a [u8], ParseError>`
 - Returning views: the output lifetime is tied to the input, never to the parser
 
+*Previews:* Allocation counts come from a counting allocator in `tasks/src/lab.rs` (harness; `#[global_allocator]` is S10-T3).
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 8.2 (Strings), std docs: `str::split_once`, `slice::split_at_checked`, `u32::from_le_bytes`
 - `nom` README (skim only, to see the `&[u8] -> (rest, value)` shape)
@@ -79,6 +81,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `Box<T>` for recursive types and trait objects; `Deref` and auto-deref
 - `Rc<T>` shared ownership vs cloning the data; counts printed as you go
 - `Weak<T>` for parent links; a cycle that leaks vs the same tree with `Weak`; `Drop` order printed
+
+*Previews:* The `Tree`'s mutable children and the shared drop log use `RefCell` as a recipe (`.borrow_mut().push(..)`); `RefCell` is taught in S5-T4.
 
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 15.1-15.4 and 15.6 (Reference Cycles Can Leak Memory)

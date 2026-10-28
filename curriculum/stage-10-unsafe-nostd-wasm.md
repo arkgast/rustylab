@@ -112,6 +112,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Passing bytes across the boundary: guest exports `alloc`, host writes into linear memory, `(ptr, len)` pairs
 - Host functions via `Linker::func_wrap`; a trap vs a returned error code
 
+*Previews:* The host's `env.blake2` import uses the `blake2` crate as harness (`// harness`); hashing is taught in S11-T3.
+
 **Reference** (read after the probes, or when stuck)
 - Rust and WebAssembly book: "What is WebAssembly?", linear memory
 - wasmtime docs: "Embedding in Rust", `Linker`, `Store`, `Memory`, `Func::wrap`

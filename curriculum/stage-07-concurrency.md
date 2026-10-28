@@ -15,6 +15,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `thread::scope`: borrow stack data from threads without `Arc`; naive "Arc + clone everything" vs scoped borrow side by side
 - `Send` vs `Sync`; why `Rc` is `!Send` (non-atomic count), `RefCell` is `!Sync`, `MutexGuard` is `!Send`; auto traits and `PhantomData`
 
+*Previews:* `Arc::new` / `Arc::clone` appear only as the naive contrast (`Arc<Mutex<T>>` is S7-T2); `join()` reports a panic as `Box<dyn Any + Send>`: map it to your typed error without inspecting it.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 16.1 (Using Threads) and 16.4 (Extensible Concurrency with Send and Sync)
 - Rust Atomics and Locks (Mara Bos) ch. 1 (Basics of Rust Concurrency)
@@ -114,6 +116,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - A spinlock: `AtomicBool` + `UnsafeCell<T>` + guard; why `lock` needs `Acquire` and `unlock` needs `Release`
 - rayon: sequential loop vs `par_iter().map().sum()` vs manual threads; work stealing; `reduce` needs associativity
 
+*Previews:* `unsafe`, `UnsafeCell::get` and `unsafe impl Sync` are sanctioned for the spinlock only, each block with a `// SAFETY:` comment; the theory, raw pointers and Miri are S10-T1.
+
 **Reference** (read after the probes, or when stuck)
 - Rust Atomics and Locks ch. 2 (Atomics), ch. 3 (Memory Ordering), ch. 4 (Building Our Own Spin Lock)
 - rayon docs: `par_iter`, `join`, `ThreadPoolBuilder`; "Rayon: data parallelism in Rust" (Niko Matsakis)
@@ -145,6 +149,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Read/write sets and conflicts: W-W and R-W on the same key; building non-conflicting batches greedily in block order
 - Determinism traps: `HashMap` iteration order, thread-completion order, floats, wall-clock time
 - State root: hash a `BTreeMap` canonically; compare sequential vs parallel roots as the core test
+
+*Previews:* The 32-byte state root comes from a hash crate used as harness (`// harness`); hashing is taught in S11-T3.
 
 **Reference** (read after the probes, or when stuck)
 - Solana docs: "Sealevel: parallel processing of smart contracts" (blog) and the account-locking section of the runtime docs

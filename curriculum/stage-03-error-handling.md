@@ -55,6 +55,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `impl Display` for humans, `impl Error` with `source()` for the chain, `impl From<Inner>` so `?` converts
 - Walking a source chain with a `while let Some(src)` loop and printing each level
 
+*Previews:* `source()` returns `Option<&(dyn Error + 'static)>`, `error_chain` takes `&dyn Error`, and `MissingField` holds a `&'static str`: copy these signatures as written; `dyn` is S4-T3, `'static` S5-T1.
+
 **Reference** (read after the probes, or when stuck)
 - The Rust Book ch. 9.2 ("Propagating Errors", "The `?` operator")
 - std docs: `std::error::Error` (`source`), `std::fmt::Display`, `From`, `std::num::ParseIntError`
@@ -93,6 +95,8 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Your S3-T2 hand-written errors next to the `thiserror` version: same behavior, fewer lines
 - `anyhow` in `main`: `.context("reading config")`, printing the chain with `{:#}` and `{:?}`
 - Panic policy: panics are for broken invariants (bugs), never for bad input; `debug_assert!` vs `assert!`; `std::process::ExitCode`
+
+*Previews:* `#[derive(Error)]` is a proc-macro derive (S9-T3) and `downcast_ref` comes from `Any` (S4-T3): use both as black boxes.
 
 **Reference** (read after the probes, or when stuck)
 - `thiserror` README and docs (`#[error]`, `#[from]`, `#[source]`, `#[error(transparent)]`)
