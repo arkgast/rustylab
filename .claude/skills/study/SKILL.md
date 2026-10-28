@@ -82,6 +82,13 @@ Stage 1 conventions (`tasks/src/s01/*`, `tasks/examples/s01_*.rs`,
 - **Fixed tests** `tasks/tests/sNN_tMM.rs`, derived from the acceptance
   criteria, including source-rule checks through `common::assert_absent`
   and similar helpers.
+- **Ledger check**: every construct in a stub's docs, a runner's kata demo
+  lines (inputs, `show!`/`println!` calls) and a test's assertion messages
+  is in `curriculum/concepts.md` at or before `<ID>`. Otherwise restructure
+  with a ledger Bridge (`for` loops and `show!` instead of closures and
+  iterator chains before Stage 2), or label it: `// preview: <construct>,
+  taught in <ID>` (one line, never quizzed) or `// harness` (runner plumbing
+  such as `std::env::args` or a REPL loop). Test *logic* may use anything.
 - **Dependencies**: add crates to `tasks/Cargo.toml` only when the stage
   first needs them. Use the latest version that builds on the pinned
   toolchain.
@@ -131,15 +138,18 @@ and takes about 5 minutes. Move on even if the learner wants to linger; the
 playground is theirs for that.
 
 1. **Ask.** `Probe k/N.` then a snippet: a complete `fn main`, at most 12
-   lines, rustfmt style, runnable. Then exactly one prediction question as the
-   last line: "What does this print?", "Which line does the compiler reject,
-   and why?", or "Which of these two is wrong, and on what input?" For an
-   idiom bullet, the snippet holds both versions labelled `// naive` and
-   `// idiomatic`.
-2. **Commit.** Wait. On "I don't know": "Guess anyway: which is more likely?"
-   Never reveal before a committed guess. Confirm in one line:
-   `Committed: <prediction>.` During a probe, `hint` gives one narrowing
-   question, never the answer.
+   lines, rustfmt style, runnable, and passing the level gate (probe rules
+   below). Then exactly one prediction question as the last line, ending
+   with `(sure / think so / guess?)`: "What does this print?", "Which line
+   does the compiler reject, and why?", or "Which of these two is wrong, and
+   on what input?" For an idiom bullet, the snippet holds both versions
+   labelled `// naive` and `// idiomatic`.
+2. **Commit.** Wait. The answer is a prediction plus one confidence word:
+   `sure`, `think so` or `guess` (missing: record `think so`). On "I don't
+   know": "Guess anyway: which is more likely?" and record `guess`. Never
+   reveal before a committed guess. Confirm in one line:
+   `Committed: <prediction> (<confidence>).` During a probe, `hint` gives one
+   narrowing question, never the answer.
 3. **Run.** Overwrite `tasks/examples/probe.rs` with the line
    `//! Probe k/N: <topic>. Edit and rerun with \`scripts/run.sh probe\`.`
    followed by the snippet. Run `rustfmt --edition 2024 tasks/examples/probe.rs`,
@@ -151,14 +161,19 @@ playground is theirs for that.
    Wrong: `No: <actual>.` then the *why* in at most 8 lines, naming the precise
    Rust term (move, reborrow, shadowing, wrapping, coercion, ...), plus one
    sentence linking to protocol work only when the link is real (overflow,
-   determinism, no panics). Enqueue the miss at once (section 11) and say
-   "I will ask you about this again tomorrow."
+   determinism, no panics). Enqueue the miss at once at interval 1
+   (section 11) and say "I will ask you about this again tomorrow." A
+   `sure` miss also gets an immediate twist on the same snippet (one line
+   changed, back to move 2) before the next probe; it does not count toward
+   N. Confident errors, once corrected, are the ones retained best
+   (hypercorrection), and the twist checks that the correction landed.
 5. **Flip** (optional, at most one; skip when short on time):
    `Flip: change one line so it prints X.` The learner edits `probe.rs` and
    runs `scripts/run.sh probe`; check their output.
 
 Before the next question, log
-`probe k | <topic> | predicted: <short> | actual: <short> | ok|miss` (and
+`probe k | <topic> | predicted: <short> | conf: <confidence> | actual: <short> | ok|miss`
+(and `twist k | <change> | predicted: <short> | conf: <confidence> | actual: <short> | ok|miss`,
 `flip k | <change> | ok|miss`), then set `probe: k/N`.
 
 Probe rules:
@@ -166,9 +181,21 @@ Probe rules:
 - Prefer output that surprises an engineer from another language: wrap vs
   panic, `if` as an expression, shadowing changing type, moving a `String` vs
   copying an `i32`, byte length vs char count.
-- Wrap literals in `std::hint::black_box` when the point is runtime behaviour
-  the compiler would otherwise reject at compile time (for example the
-  deny-by-default `arithmetic_overflow` lint).
+- **Level gate.** Every snippet the learner reads (probe, twist, flip,
+  lesson example, hint) may use only constructs introduced at or before the
+  current task, plus the one construct being taught. Check every construct
+  against `curriculum/concepts.md` before showing the snippet. When the
+  behaviour needs something not yet introduced, restructure with known tools
+  (the ledger's Bridges); never reach for a later construct. Example:
+  runtime overflow goes through `fn add(a: u8, b: u8) -> u8 { a + b }`
+  called with `200, 100`, because the deny-by-default `arithmetic_overflow`
+  lint cannot see through a parameter (`black_box` waits for S6-T5). Two
+  escape hatches, both labelled in the snippet: **preview**, a later
+  construct shown in passing, with a one-line `// preview: <construct>,
+  taught in <ID>` comment, at most two per snippet and never the subject of
+  the question; and **harness**, code the learner treats as a black box
+  (`kata`, `show!`), which never appears in a probe. A spec's `*Previews:*`
+  note lists the previews a task needs; it is not a probe bullet.
 - Leave `probe.rs` compiling, formatted and clippy-clean at the end of every
   probe (`cargo clippy -q -p tasks --example probe -- -D warnings`), because
   `scripts/gate.sh` lints every example. If the probe was about a rejected
@@ -193,7 +220,8 @@ ask." No question at the end.
 Stay silent until asked; then be brief. Words to honour, no slash needed:
 - `hint`: the next rung for the kata in question, one rung per message:
   (1) a question; (2) the concept and where it is in the task's Reference;
-  (3) the same idea on a different problem, written to `probe.rs` and run;
+  (3) the same idea on a different problem, written to `probe.rs` and run,
+  passing the level gate (section 5) like any probe;
   (4) the solution for that part only. Log `hint | <kata> | rung <r> (<what
   you gave>)` and set `hints` to the highest rung today. Rung 3+ also enqueues
   a `miss` for the concept. On rung 4 say once: "This costs Explanation points
@@ -293,7 +321,8 @@ edited in place:
 # S1-T3 tutor log
 ## 2026-10-29 session 1
 recall  | S1-T2 | why Option beats -1 | ok
-probe 1 | drop order of three locals | predicted: a b c | actual: c b a | miss
+probe 1 | drop order of three locals | predicted: a b c | conf: sure | actual: c b a | miss
+twist 1 | declared b before a | predicted: c a b | conf: sure | actual: c a b | ok
 flip 1  | reversed the declarations | ok
 hint    | take_largest | rung 2 (concept: Option<usize> from position_max)
 skip    | probe 3 | mem::replace

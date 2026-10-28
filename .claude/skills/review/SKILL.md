@@ -22,8 +22,9 @@ log as evidence, not your memory of the conversation.
    is missing or empty, stop and ask for it.
 4. **Tutor log.** Read `.study/log/<ID>.md` if it exists (tasks started before
    the log existed have none; then skip this step). Collect:
-   - every `miss` line (probe, flip, recall): each becomes an oral question
-     variant in step 6;
+   - every `miss` line (probe, twist, flip, recall): each becomes an oral
+     question variant in step 6; a `conf: sure` miss is a confident error
+     and weighs most;
    - every `hint` at `rung 4` (including `show me`): the parts the learner was
      shown; they must re-derive them in step 6;
    - `skip` lines: topics never probed; cover them orally if the code touches
@@ -32,13 +33,17 @@ log as evidence, not your memory of the conversation.
    completely and run `scripts/run.sh <ID>` to see its output. Check every
    acceptance criterion in the spec and every blocker in the rubric. Run extra
    edge cases of your own (in the scratchpad, not the repo) if something looks
-   suspicious.
+   suspicious. Judge at the learner's level: `curriculum/concepts.md` says
+   which constructs exist at `<ID>`. Never expect, suggest as missing, or
+   deduct for the absence of a construct the ledger introduces later. A
+   later idiom used correctly earns Idiom credit only if the learner explains
+   it in step 6; otherwise it counts as code they cannot explain.
 6. **Oral check.** One question per message, as the last line, then wait.
    Ask:
    - the three checkpoint questions, reworded or with a small twist;
    - one question about a specific line or choice in their code;
    - one variant per logged miss, at most 3 (prefer misses that repeat, then
-     the most recent);
+     `conf: sure` misses, then the most recent);
    - for each rung-4 part: "Without looking, how does <part> work, and why is
      it correct?" A clear answer in their own words re-derives it.
    Never answer for the learner and never reveal the expected answer before
@@ -88,6 +93,8 @@ log as evidence, not your memory of the conversation.
 
 - Do not fix the learner's code. Point, explain, and let them fix it.
 - Do not edit or weaken the fixed tests in `tasks/tests/`.
+- Your own oral questions and suggestions obey the ledger too: a question
+  about `<ID>` uses only constructs introduced at or before it.
 - Be honest: a 79 is a fail. Say so kindly and precisely.
 - Phase I (Stages 1-4): do not ask for compiler error codes or failing
   examples. Ask *why* the compiler accepted or rejected something.

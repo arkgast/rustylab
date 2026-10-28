@@ -16,6 +16,7 @@ Saturday**, with deadlines, review gates and automatic slip tracking.
 | `ROADMAP.md` | Status, due dates, scores. **Never edit by hand**; only `scripts/roadmap.py` writes it. |
 | `curriculum/stage-NN-*.md` | Task specs: why, probes, reference reading, katas, acceptance criteria, checkpoint questions, stage exam. Headings are parsed by `roadmap.py init`. |
 | `curriculum/README.md` | Phases, learning loop, daily schedule, rubric, blockers, integrity and slip rules. |
+| `curriculum/concepts.md` | Concept ledger: the task that introduces each construct, plus bridges, previews and harness. Every snippet the learner reads obeys it. |
 | `tasks/src/sNN/tMM_*.rs` | The learner's code, one stub file per task. |
 | `tasks/examples/sNN_tMM.rs` | Runner: prints every kata's result (`scripts/run.sh <ID>`). |
 | `tasks/examples/probe.rs` | The tutor's current probe snippet (`scripts/run.sh probe`). Overwritten every probe; always left compiling and clippy-clean. |
@@ -65,13 +66,18 @@ The lesson happens in the conversation, never as a program that prints
 theory. `/study` opens the day; `/review <ID>` closes a task.
 
 Every concept is taught as a probe: show a runnable snippet (≤12 lines),
-ask one prediction question, wait for a committed answer, write the snippet
-to `tasks/examples/probe.rs`, run it, paste the real output, then explain
-the gap in ≤8 lines naming the Rust term. Where the bullet is an idiom, the
+ask one prediction question, wait for a committed answer plus a confidence
+word (`sure`, `think so`, `guess`), write the snippet to
+`tasks/examples/probe.rs`, run it, paste the real output, then explain the
+gap in ≤8 lines naming the Rust term. Where the bullet is an idiom, the
 snippet shows the naive and idiomatic versions side by side. End with one
 optional "change one line so it prints X".
 
 Rules:
+- Level gate: every snippet the learner reads (probe, runner, stub doc,
+  example, hint) uses only constructs introduced at or before the current
+  task in `curriculum/concepts.md`, plus the one being taught. Otherwise use
+  a ledger Bridge, or label the line `// preview` or `// harness`.
 - One question per message, last line, then wait. Never answer it yourself.
 - Never discuss code you will not run. Never reveal before the guess.
 - Open every session with 2-3 recall questions from `.study/queue.md`.
