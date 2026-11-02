@@ -23,7 +23,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s11/t01_serde.rs`: `RpcRequest<'a>` (borrowed `method`, `params` as `&RawValue`), an internally tagged `Tx` enum (`Transfer`, `Stake`), `Amount(u128)` that serializes as a decimal string (custom `Serialize`/`Deserialize` with a `Visitor`), `Hex32([u8; 32])` as `0x`-prefixed hex, and a `Genesis` struct with `deny_unknown_fields`.
 
-**Run.** `scripts/run.sh S11-T1` prints round-trips and the rejected inputs with their errors.
+**Run.** `cargo x run S11-T1` prints round-trips and the rejected inputs with their errors.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s11_t01.rs` pass
@@ -55,7 +55,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s11/t02_codec.rs`: traits `Encode`/`Decode` (`decode(&mut &[u8]) -> Result<Self, CodecError>`), impls for `u8..u128`, `bool`, `Option<T>`, `Vec<T>`, `[u8; N]`, `BTreeMap<K, V>`, a `Compact<u128>` wrapper, and a hand-written impl for `Transfer { from: [u8; 32], to: [u8; 32], amount: Compact<u128>, memo: Option<Vec<u8>> }`. Decoding must consume all input (`decode_all`).
 
-**Run.** `scripts/run.sh S11-T2` prints hex encodings next to `parity-scale-codec` and `borsh` output.
+**Run.** `cargo x run S11-T2` prints hex encodings next to `parity-scale-codec` and `borsh` output.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s11_t02.rs` pass, including proptest differential tests against `parity-scale-codec` (SCALE mode) and `borsh`
@@ -87,7 +87,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s11/t03_hashing.rs`: a `Hasher` trait with `Blake2b256`, `Sha256`, `Keccak256` impls via the `digest` crate; `tagged_hash(tag: &[u8], data: &[u8]) -> [u8; 32]` (length-prefixed tag); `TxId::of(&Transfer)` over the S11-T2 encoding; `storage_key(pallet, item, key)` in the `Blake2_128Concat` layout.
 
-**Run.** `scripts/run.sh S11-T3` prints known-answer vectors and the storage key for a sample account.
+**Run.** `cargo x run S11-T3` prints known-answer vectors and the storage key for a sample account.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s11_t03.rs` pass, including published test vectors for all three hashes
@@ -118,7 +118,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s11/t04_merkle.rs`: `MerkleTree::from_leaves(&[Vec<u8>]) -> Result<MerkleTree, MerkleError>`, `root()`, `prove(index) -> Option<Proof>`, `Proof::verify(root, leaf, index, leaf_count) -> bool`, generic over the S11-T3 `Hasher`; naive recursive version vs iterative level-by-level version side by side.
 
-**Run.** `scripts/run.sh S11-T4` prints a 5-leaf tree level by level and a proof.
+**Run.** `cargo x run S11-T4` prints a 5-leaf tree level by level and a proof.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s11_t04.rs` pass, including RFC 6962 test vectors
@@ -150,7 +150,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s11/t05_signatures.rs`: `SigningPayload { chain_id, genesis_hash, nonce, valid_until, call }` with canonical encoding from S11-T2, `sign(&SigningKey, &SigningPayload) -> Signature`, `verify(&VerifyingKey, &SigningPayload, &Signature) -> Result<(), SigError>`, and a `NonceTracker` (`BTreeMap<AccountId, u64>`) with `check_and_bump`.
 
-**Run.** `scripts/run.sh S11-T5` signs, verifies, then shows each replay attempt rejected with its reason.
+**Run.** `cargo x run S11-T5` signs, verifies, then shows each replay attempt rejected with its reason.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s11_t05.rs` pass
@@ -181,7 +181,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s11/t06_pipeline.rs`: `UncheckedTx` (wire bytes) → `decode` → `verify` → `CheckedTx` (typestate: only constructible through verification) → `NonceTracker::apply`; `PipelineError` with variants for each stage. Write an ADR on the signing payload layout.
 
-**Run.** `scripts/run.sh S11-T6` processes a batch of 10 wire transactions and prints accepted/rejected with reasons.
+**Run.** `cargo x run S11-T6` processes a batch of 10 wire transactions and prints accepted/rejected with reasons.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s11_t06.rs` pass

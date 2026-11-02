@@ -23,7 +23,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s05/t01_lifetimes.rs`: `longest`, `first_sentence`, `split_pair<'a>(&'a str, char) -> Option<(&'a str, &'a str)>`, `struct Highlighter<'t> { text: &'t str }` with `fn words(&self) -> impl Iterator<Item = &'t str>`, `struct Pair<'a, 'b>` that returns only the `'a` half, plus at least 4 `compile_fail` doctests.
 
-**Run.** `scripts/run.sh S5-T1` prints each kata; `cargo test -p tasks --doc s05` runs the doctests.
+**Run.** `cargo x run S5-T1` prints each kata; `cargo test -p tasks --doc s05` runs the doctests.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s05_t01.rs` pass
@@ -57,7 +57,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s05/t02_zero_copy.rs`: a `Cursor<'a>` over `&'a [u8]` with `u8`, `u32_le`, `bytes(n)`, `str_prefixed` (length-prefixed UTF-8); `Header<'a>` and `Record<'a>` types; `parse_frame(&[u8]) -> Result<Frame<'_>, ParseError>`; `parse_kv_lines(&str) -> Result<Vec<(&str, &str)>, ParseError>`.
 
-**Run.** `scripts/run.sh S5-T2` parses a sample frame and a malformed one.
+**Run.** `cargo x run S5-T2` parses a sample frame and a malformed one.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s05_t02.rs` pass, including truncated and invalid-UTF-8 inputs
@@ -90,7 +90,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s05/t03_smart_pointers.rs`: `enum List { Cons(i64, Box<List>), Nil }` with `sum` and `push_front`; a `Tree` of `Rc<Node>` children with `Weak` parent links (`add_child`, `parent_value`, `depth`); a `Tracked` type whose `Drop` logs into a shared log so tests can assert drop order.
 
-**Run.** `scripts/run.sh S5-T3` prints ref counts and the drop log.
+**Run.** `cargo x run S5-T3` prints ref counts and the drop log.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s05_t03.rs` pass
@@ -121,7 +121,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s05/t04_interior.rs`: `CallCounter` (`Cell<u64>`), `MemoFib` (`RefCell<BTreeMap<u64, u128>>` cache behind `&self`), `Config` with a `OnceCell<String>` lazily derived field, and `SharedLedger = Rc<RefCell<Ledger>>` with `transfer` that returns `Err(Busy)` instead of panicking on a re-entrant borrow.
 
-**Run.** `scripts/run.sh S5-T4`
+**Run.** `cargo x run S5-T4`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s05_t04.rs` pass
@@ -153,7 +153,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s05/t05_layout.rs`: `layout_report::<T>() -> Layout { size, align }`; three struct pairs (same fields, different order or repr) whose sizes you predict in doc comments; `AccountId(NonZeroU64)` with `Option<AccountId>` as 8 bytes; `normalize(&str) -> Cow<'_, str>` and `escape_memo(&str) -> Cow<'_, str>`.
 
-**Run.** `scripts/run.sh S5-T5` prints a size/align table next to your predictions.
+**Run.** `cargo x run S5-T5` prints a size/align table next to your predictions.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s05_t05.rs` pass (they assert sizes and `Cow` variants)
@@ -184,7 +184,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s05/t06_arena_interp.rs`: `tokenize(&str) -> Result<Vec<Token<'_>>, LexError>`; `Ast { nodes: Vec<Node> }` with `NodeId`; `parse(&[Token]) -> Result<(Ast, NodeId), ParseError>` for integers, `+ - * /`, parentheses, `let x = e in e` and variables; `eval(&Ast, NodeId) -> Result<i64, EvalError>` with checked arithmetic. ADR in `docs/adr/` on arena vs `Rc` tree.
 
-**Run.** `scripts/run.sh S5-T6` evaluates sample programs; `scripts/run.sh S5-T6 -- repl` reads expressions.
+**Run.** `cargo x run S5-T6` evaluates sample programs; `cargo x run S5-T6 -- repl` reads expressions.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s05_t06.rs` pass

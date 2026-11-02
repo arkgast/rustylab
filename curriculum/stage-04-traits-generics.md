@@ -30,7 +30,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `impl Display for Account` and `impl Default for Config`
 - `sorted_pool(txs: Vec<PendingTx>) -> Vec<PendingTx>` using your `Ord`
 
-**Run.** `scripts/run.sh S4-T1`
+**Run.** `cargo x run S4-T1`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s04_t01.rs` pass
@@ -68,7 +68,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `trait Summary` with a blanket `impl<T: Display> Summary for T`
 - `count_where<T, F: Fn(&T) -> bool>(xs: &[T], pred: F) -> usize`
 
-**Run.** `scripts/run.sh S4-T2`
+**Run.** `cargo x run S4-T2`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s04_t02.rs` pass
@@ -108,7 +108,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `make_handler(kind: &str) -> Option<Box<dyn Handler>>` (a small factory)
 - `describe_all(items: &[&dyn Describe]) -> Vec<String>`
 
-**Run.** `scripts/run.sh S4-T3` prints the pipeline run and the `size_of` comparison.
+**Run.** `cargo x run S4-T3` prints the pipeline run and the `size_of` comparison.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s04_t03.rs` pass
@@ -142,7 +142,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Day 1: `trait Container { type Item; fn get(&self, i: usize) -> Option<&Self::Item>; fn first(&self) -> Option<&Self::Item>; fn len(&self) -> usize; }` for `MyVec<T>` and `Bytes`; `trait Storage { type Key: Ord; type Value; ... }` with an in-memory `BTreeMap` impl; `Vec2 { x: i64, y: i64 }` with `Add`, `Sub`, `Neg`, `AddAssign` and `Mul<i64>`
 - Day 2: `Hex([u8; 4])` with `FromStr` and `Display` round-trip; `Percent(u8)` with `TryFrom<u32>` (rejects > 100); `Address` with `From<[u8; 32]>`, `TryFrom<&[u8]>` and `AsRef<[u8]>`; `greet<S: AsRef<str>>(name: S) -> String`; `Rgb` with `FromStr` for `"#rrggbb"` returning a typed error
 
-**Run.** `scripts/run.sh S4-T4`
+**Run.** `cargo x run S4-T4`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s04_t04.rs` pass
@@ -180,7 +180,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `Balance::apply_rate(self, rate: Fixed18) -> Option<Balance>` (rounds down)
 - `split_evenly(total: Balance, n: u32) -> Option<(Balance, Balance)>` returning `(share, remainder)`
 
-**Run.** `scripts/run.sh S4-T5`
+**Run.** `cargo x run S4-T5`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s04_t05.rs` pass
@@ -218,7 +218,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `Runtime<T>` that owns both and exposes `execute_block(block: Block<T>) -> Result<(), RuntimeError>`
 - Two configs: `TestConfig` (`AccountId = String`, `Balance = u64`, `BlockNumber = u32`) and `ProdConfig` (`AccountId = AccountId([u8; 32])`-style newtype, `Balance = u128`, `BlockNumber = u64`)
 
-**Run.** `scripts/run.sh S4-T6` runs the same scripted block on both configs and prints final state for each.
+**Run.** `cargo x run S4-T6` runs the same scripted block on both configs and prints final state for each.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s04_t06.rs` pass for both configs

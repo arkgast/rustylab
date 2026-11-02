@@ -1,7 +1,7 @@
 //! S1-T3 · Ownership, moves & Copy.
 //!
-//! Replace every `todo!()`. Run `scripts/run.sh S1-T3` to see your results,
-//! `scripts/gate.sh S1-T3` to check them.
+//! Replace every `todo!()`. Run `cargo x run S1-T3` to see your results,
+//! `cargo x gate S1-T3` to check them.
 //!
 //! Rule: no `.clone()`, `.to_owned()`, `.to_string()` or `String::from` in
 //! this file. Every value you return was moved, never copied.

@@ -23,7 +23,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s13/t01_models.rs`: three tiny models of the same "transfer 10 from A to B": `utxo::apply(&mut UtxoSet, Tx)`, `solana_like::process(program_id, accounts: &[AccountInfo], data)` with owner and signer checks, and `soroban_like::transfer(&mut Env, from, to, amount)` with `env.require_auth(from)` and storage tiers. Plus `docs/execution-models.md`: a comparison table (state location, auth, parallelism, rent/TTL, replay protection) and one page of prose.
 
-**Run.** `scripts/run.sh S13-T1` runs the transfer in each model and prints what each one had to check.
+**Run.** `cargo x run S13-T1` runs the transfer in each model and prints what each one had to check.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s13_t01.rs` pass
@@ -55,7 +55,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s13/t02_vulns/`: seven intentionally vulnerable modules (provided as stubs by `/study`): `missing_signer.rs`, `account_substitution.rs`, `overflow.rs`, `fee_math.rs`, `callback_order.rs`, `unbounded_iter.rs`, `replay.rs`. For each: write `exploit_*` test in the module showing the attack succeeds, commit the red state in the journal (paste the output), then fix the code so the test asserts the attack fails. Each fix gets a two-line `//` comment naming the class.
 
-**Run.** `scripts/run.sh S13-T2` prints, per module, the exploit outcome before and after (`--vulnerable` flag keeps the original behind a feature).
+**Run.** `cargo x run S13-T2` prints, per module, the exploit outcome before and after (`--vulnerable` flag keeps the original behind a feature).
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s13_t02.rs` pass against the fixed code

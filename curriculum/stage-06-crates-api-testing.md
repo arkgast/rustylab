@@ -56,7 +56,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s06/t02_api_design.rs`: `TransferBuilder` (typestate-lite: `from`, `to`, `amount`, optional `memo`, `fee`; `build() -> Result<Transfer, BuildError>`), `#[non_exhaustive] pub enum TxError`, a sealed `Signer` trait, full rustdoc with runnable examples on every public item. Then `labs/semver-demo/`: tag v0.1.0, make one breaking and one compatible change, run `cargo semver-checks`.
 
-**Run.** `scripts/run.sh S6-T2`; `cargo test -p tasks --doc s06`; `cd labs/semver-demo && cargo semver-checks --baseline-rev v0.1.0`.
+**Run.** `cargo x run S6-T2`; `cargo test -p tasks --doc s06`; `cd labs/semver-demo && cargo semver-checks --baseline-rev v0.1.0`.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s06_t02.rs` pass
@@ -120,7 +120,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s06/t04_proptest.rs`: a `Ledger` with `apply(Op) -> Result<(), LedgerError>` and a deliberately simple reference model (`BTreeMap` + `u128` math); proptests: (1) model equivalence over random `Vec<Op>`, (2) supply conservation, (3) encode/decode round-trip of `Op`, (4) failed ops leave state unchanged.
 
-**Run.** `scripts/run.sh S6-T4`; `PROPTEST_CASES=10000 cargo test -p tasks --test s06_t04`
+**Run.** `cargo x run S6-T4`; `PROPTEST_CASES=10000 cargo test -p tasks --test s06_t04`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s06_t04.rs` pass at 10 000 cases

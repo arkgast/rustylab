@@ -1,4 +1,4 @@
-//! Runner for S1-T3: `scripts/run.sh S1-T3`. Add your own `show!` lines freely.
+//! Runner for S1-T3: `cargo x run S1-T3`. Add your own `show!` lines freely.
 use tasks::s01::t03_ownership::*;
 use tasks::{lab::kata, show};
 

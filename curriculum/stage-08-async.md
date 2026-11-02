@@ -22,7 +22,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s08/t01_futures.rs` (std only, no tokio): `Countdown` future that is `Pending` n times and wakes itself; `TimerFuture` that a helper thread completes; `block_on<F: Future>(f) -> F::Output`; `MiniExecutor` with `spawn` and `run` over a channel of `Arc<Task>`; `join2(a, b)` combinator written by hand.
 
-**Run.** `scripts/run.sh S8-T1` prints every `poll` and `wake` call in order.
+**Run.** `cargo x run S8-T1` prints every `poll` and `wake` call in order.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s08_t01.rs` pass

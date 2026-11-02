@@ -25,17 +25,17 @@ frameworks read as "the thing I built, with production polish", not magic.
 1. **Recall and probes.** `/study`: 2-3 recall questions, then 3-5 probes:
    predict, run, explain the gap. A probe is a runnable snippet of at most 12
    lines; you commit to a prediction, the tutor runs it
-   (`tasks/examples/probe.rs`; rerun it yourself with `scripts/run.sh probe`),
+   (`scratch/src/bin/probe.rs`; rerun it yourself with `cargo x probe`),
    and the output settles it. Idiom probes show the **idiomatic version next
    to the naive one**. Read the task's Reference after the probes, or when
    stuck.
 2. **Katas.** Replace the `todo!()`s in `tasks/src/sNN/tMM_*.rs`.
-3. **See it.** `scripts/run.sh <ID>` prints every kata's result (⏳ = not done
-   yet). Predict the output before you press enter. `scripts/run.sh playground`
+3. **See it.** `cargo x run <ID>` prints every kata's result (⏳ = not done
+   yet). Predict the output before you press enter. `cargo x play`
    is your scratch space.
-4. **Gate.** `scripts/gate.sh <ID>`: fmt, clippy `-D warnings`, the fixed tests,
+4. **Gate.** `cargo x gate <ID>`: fmt, clippy `-D warnings`, the fixed tests,
    your own tests, doctests, and a check that the runner builds.
-5. **Journal.** `journal/<ID>.md` (template: `journal/TEMPLATE.md`). The close
+5. **Journal.** `journal/<ID>.md` via `cargo x journal <ID>`. The close
    message lists the day's misses as the seed for "What surprised me".
 6. **Review.** `/review <ID>`: rubric and oral questions, including what you
    missed in the probes. Only a passing review moves the roadmap.
@@ -62,9 +62,9 @@ timers: the tutor never announces the schedule, it only cues the break.
 |-------|---------|-----------|------|
 | Recall | 15 | tutor | 2-3 questions from `.study/queue.md` (yesterday's checkpoints first, then older due items), answered from memory with no files open. Then predict the output of one kata from yesterday's runner; the tutor runs it. |
 | Probes | 25-35 | tutor | 3-5 probes: predict, run, explain the gap. Skipped on day 2+ of a task unless probes remain. Read the task's Reference afterwards. |
-| Build | 90-100 | you | Katas. One compiler error at a time; read the whole message before you change anything. `scripts/run.sh <ID>` often. The tutor is silent until asked; `hint` climbs the ladder one rung. |
+| Build | 90-100 | you | Katas. One compiler error at a time; read the whole message before you change anything. `cargo x run <ID>` often. The tutor is silent until asked; `hint` climbs the ladder one rung. |
 | Break | 10 | tutor, which checks `scripts/clock.sh` at natural seams | At ~90 minutes, one line. Ten minutes away from the screen. |
-| Self-review | 15 | you | `scripts/gate.sh <ID>`, delete dead code, re-read your diff as if a stranger wrote it. The tutor reviews only if asked, and only points. |
+| Self-review | 15 | you | `cargo x gate <ID>`, delete dead code, re-read your diff as if a stranger wrote it. The tutor reviews only if asked, and only points. |
 | Journal | 10 | you | `journal/<ID>.md`. The close message lists the day's misses as the seed for "What surprised me". |
 | Close | 2 | tutor | `/study close` (or "done for today"). Then nothing demanding for 10-20 minutes. |
 
@@ -93,7 +93,7 @@ At 85 minutes or more with no break logged, the tutor gives the one-line cue.
 
 A task flips to ✅ only through `/review <ID>`, in this order:
 
-1. **Automated gate** (`scripts/gate.sh <ID>`). Red means not ready; there is no
+1. **Automated gate** (`cargo x gate <ID>`). Red means not ready; there is no
    penalty and the attempt does not count.
 2. **Journal present** with the checkpoint questions answered.
 3. **Code review and rubric.** The reviewer reads your code and runs your

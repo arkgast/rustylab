@@ -14,7 +14,7 @@ log as evidence, not your memory of the conversation.
 
 1. **Locate.** Find the row in `ROADMAP.md` and the spec in
    `curriculum/stage-XX-*.md`. Unknown ID, or an earlier row not ✅: stop.
-2. **Automated gate.** Run `scripts/gate.sh <ID>` (for `S<n>-GATE` skip to the
+2. **Automated gate.** Run `cargo x gate <ID>` (for `S<n>-GATE` skip to the
    exam below). If red: show the failing output, say what to look at (a hint,
    not a solution), leave ROADMAP unchanged, and stop. A red gate is "not
    ready", not a failed attempt.
@@ -30,7 +30,7 @@ log as evidence, not your memory of the conversation.
    - `skip` lines: topics never probed; cover them orally if the code touches
      them.
 5. **Read and run the code.** Read the learner's source for the task
-   completely and run `scripts/run.sh <ID>` to see its output. Check every
+   completely and run `cargo x run <ID>` to see its output. Check every
    acceptance criterion in the spec and every blocker in the rubric. Run extra
    edge cases of your own (in the scratchpad, not the repo) if something looks
    suspicious. Judge at the learner's level: `curriculum/concepts.md` says

@@ -1,7 +1,7 @@
 //! S1-T1 · Cargo, bindings & control flow.
 //!
-//! Replace every `todo!()`. Run `scripts/run.sh S1-T1` to see your results,
-//! `scripts/gate.sh S1-T1` to check them.
+//! Replace every `todo!()`. Run `cargo x run S1-T1` to see your results,
+//! `cargo x gate S1-T1` to check them.
 //!
 //! Rules: no `as` casts in this file; `next_power_of_two` uses `loop` with
 //! `break <value>`; `grade` is one `match` with range patterns.

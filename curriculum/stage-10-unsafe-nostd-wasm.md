@@ -23,7 +23,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s10/t01_unsafe.rs`: a fixed-capacity `RingBuffer<T, const N: usize>` over `[MaybeUninit<T>; N]` with `push`, `pop`, `peek`, `len` and a correct `Drop`; `split_at_mut_raw(&mut [T], usize) -> Option<(&mut [T], &mut [T])>` re-implemented with raw pointers; `unsafe fn read_u32_le(ptr: *const u8) -> u32` with a documented contract and a safe wrapper `read_u32_le_checked(&[u8]) -> Option<u32>`.
 
-**Run.** `scripts/run.sh S10-T1`, then `cargo +nightly miri test -p tasks --test s10_t01`.
+**Run.** `cargo x run S10-T1`, then `cargo +nightly miri test -p tasks --test s10_t01`.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s10_t01.rs` pass under plain `cargo test` and under `cargo miri test`

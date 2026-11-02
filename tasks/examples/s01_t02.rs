@@ -1,4 +1,4 @@
-//! Runner for S1-T2: `scripts/run.sh S1-T2`. Add your own `show!` lines freely.
+//! Runner for S1-T2: `cargo x run S1-T2`. Add your own `show!` lines freely.
 use tasks::s01::t02_structs_enums::*;
 use tasks::{lab::kata, show};
 

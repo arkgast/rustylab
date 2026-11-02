@@ -23,7 +23,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s01/t01_basics.rs`: seven katas: `fizzbuzz`, `grade`, `sum_of_digits`, `is_prime`, `next_power_of_two`, `overflow_modes`, `min_max3`.
 
-**Run.** `scripts/run.sh S1-T1` prints each kata's result; unfinished ones show ⏳.
+**Run.** `cargo x run S1-T1` prints each kata's result; unfinished ones show ⏳.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s01_t01.rs` pass
@@ -55,7 +55,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s01/t02_structs_enums.rs`: `Rect` (constructors, `area`, `can_hold`), `Direction` (`turn_right`, `opposite`), `Position::step`, `Coin` (`value_in_cents`, `from_cents`) and `Command::describe`.
 
-**Run.** `scripts/run.sh S1-T2`
+**Run.** `cargo x run S1-T2`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s01_t02.rs` pass
@@ -85,7 +85,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s01/t03_ownership.rs`: `shout`, `longer`, `Wallet` (`new`, `deposit`, `into_owner`, `take_largest`, `drain_into`), `swap_owners`.
 
-**Run.** `scripts/run.sh S1-T3`
+**Run.** `cargo x run S1-T3`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s01_t03.rs` pass
@@ -115,7 +115,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s01/t04_borrowing.rs`: slices (`largest`, `sum_evens`, `rotate_left`, `dedup_sorted_len`) and strings (`first_word`, `longest_line`, `split_header_body`, `truncate_chars`, `count_words`, `capitalize_words`).
 
-**Run.** `scripts/run.sh S1-T4`
+**Run.** `cargo x run S1-T4`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s01_t04.rs` pass, including emoji and multi-byte cases
@@ -148,7 +148,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s01/t05_ledger.rs`: `Command::parse(&str) -> Result<Command, ParseError>` and `Ledger::execute(&mut self, Command) -> Result<Outcome, LedgerError>` for `open`, `deposit`, `withdraw`, `transfer`, `balance`.
 
-**Run.** `scripts/run.sh S1-T5` runs a scripted session; `scripts/run.sh S1-T5 -- repl` reads commands from your keyboard.
+**Run.** `cargo x run S1-T5` runs a scripted session; `cargo x run S1-T5 -- repl` reads commands from your keyboard.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s01_t05.rs` pass

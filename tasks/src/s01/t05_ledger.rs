@@ -18,8 +18,8 @@
 //! `#[cfg(test)]`; checked arithmetic for balances; at least 5 tests of your
 //! own at the bottom of this file, at least 3 of them on failure paths.
 //!
-//! Run `scripts/run.sh S1-T5` (scripted session) or
-//! `scripts/run.sh S1-T5 -- repl` (type commands yourself).
+//! Run `cargo x run S1-T5` (scripted session) or
+//! `cargo x run S1-T5 -- repl` (type commands yourself).
 
 /// A parsed command. Names are owned: the command outlives the input line.
 #[derive(Debug, Clone, PartialEq, Eq)]

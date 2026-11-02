@@ -1,0 +1,11 @@
+# Local, gitignored crate: never reviewed, never seen by the gate.
+# Add dependencies here when a probe or experiment needs one.
+[package]
+name = "scratch"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]

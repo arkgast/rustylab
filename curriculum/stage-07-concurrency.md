@@ -24,7 +24,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s07/t01_threads.rs`: `parallel_sum(&[u64], threads) -> Result<u128, SumError>` with `thread::scope`; `parallel_map<T, U>(Vec<T>, f) -> Vec<U>` preserving order; `chunked_hash_count(&[Vec<u8>]) -> usize`; plus `compile_fail` doctests showing `Rc` cannot cross `thread::spawn` (E0277) and a borrowed slice cannot go into `thread::spawn` (E0373).
 
-**Run.** `scripts/run.sh S7-T1` prints per-thread chunks and timings.
+**Run.** `cargo x run S7-T1` prints per-thread chunks and timings.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s07_t01.rs` pass
@@ -57,7 +57,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s07/t02_shared_state.rs`: `Bank { accounts: Vec<Mutex<Account>> }` with `transfer(from, to, amount)` that locks in ascending id order and handles `from == to`; `Mempool` behind `RwLock` (`insert`, `contains`, `drain_by_fee`); `Counter` with poisoning mapped to `Err(Poisoned)`; a stress test with 8 threads x 10 000 random transfers.
 
-**Run.** `scripts/run.sh S7-T2` runs the stress test and prints total supply before and after.
+**Run.** `cargo x run S7-T2` runs the stress test and prints total supply before and after.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s07_t02.rs` pass, including the stress test under `--release`
@@ -90,7 +90,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s07/t03_channels.rs`: `ThreadPool::new(n) -> Result<Self, PoolError>`, `execute(job) -> Result<(), PoolError>`, `shutdown(self) -> Vec<JobReport>` and a `Drop` that joins all workers; a 3-stage pipeline `parse -> verify -> apply` over bounded channels that preserves input order in the final output.
 
-**Run.** `scripts/run.sh S7-T3` prints jobs per worker and the shutdown sequence.
+**Run.** `cargo x run S7-T3` prints jobs per worker and the shutdown sequence.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s07_t03.rs` pass
@@ -124,7 +124,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s07/t04_atomics.rs`: `StatsCounter` (Relaxed counters, snapshot), `OnceFlag` publishing a value with Release/Acquire, `SpinLock<T>` with an RAII guard (the one place `unsafe` is allowed this stage, every block with a `// SAFETY:` comment), and `par_verify(&[Tx]) -> Vec<Result<(), VerifyError>>` with rayon preserving order.
 
-**Run.** `scripts/run.sh S7-T4`; `cargo +nightly miri test -p tasks --test s07_t04` if Miri is installed.
+**Run.** `cargo x run S7-T4`; `cargo +nightly miri test -p tasks --test s07_t04` if Miri is installed.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s07_t04.rs` pass, including an 8-thread spinlock stress test
@@ -159,7 +159,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s07/t05_parallel_exec.rs`: `Tx { id, reads: BTreeSet<Key>, writes: BTreeSet<Key>, op }`, `schedule(&[Tx]) -> Vec<Batch>` (conflict-free batches preserving relative order of conflicting txs), `execute_sequential(&State, &[Tx]) -> Result<(State, Receipts), ExecError>`, `execute_parallel(&State, &[Tx], threads) -> Result<(State, Receipts), ExecError>` using rayon or scoped threads, and `state_root(&State) -> [u8; 32]`. ADR in `docs/adr/` on scheduling strategy.
 
-**Run.** `scripts/run.sh S7-T5` prints batches, speedup and both state roots.
+**Run.** `cargo x run S7-T5` prints batches, speedup and both state roots.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s07_t05.rs` pass

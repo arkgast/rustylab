@@ -1,5 +1,5 @@
 //! Helpers for the task runners in `tasks/examples/`, so you can *see* your
-//! code work: `scripts/run.sh S1-T1` prints every kata's results.
+//! code work: `cargo x run S1-T1` prints every kata's results.
 
 use std::any::Any;
 use std::panic::{self, AssertUnwindSafe};

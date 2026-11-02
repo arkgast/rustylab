@@ -1,7 +1,7 @@
 //! S1-T2 · Structs, methods & enums.
 //!
-//! Replace every `todo!()`. Run `scripts/run.sh S1-T2` to see your results,
-//! `scripts/gate.sh S1-T2` to check them.
+//! Replace every `todo!()`. Run `cargo x run S1-T2` to see your results,
+//! `cargo x gate S1-T2` to check them.
 //!
 //! Rule: no `_ =>` wildcard arm when matching on the enums of this file.
 

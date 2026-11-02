@@ -1,0 +1,3 @@
+# `cargo x <command>` is this repo's `npm run`; see README.md.
+[alias]
+x = "run -q -p xtask --"

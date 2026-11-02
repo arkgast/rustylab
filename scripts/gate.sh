@@ -45,4 +45,4 @@ step "runner builds (scripts/run.sh ${id})"
 cargo build -q -p tasks --example "${test_target}"
 
 printf '\n\033[32m✔ automated gate green for %s\033[0m\n' "$id"
-echo "Next: write journal/${id}.md, then run /review ${id}"
+echo "Next: cargo x journal ${id}, then /review ${id}"

@@ -30,7 +30,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `both(a: Option<u32>, b: Option<u32>) -> Option<u64>` (`zip`, checked mul)
 - `config_value(env: &BTreeMap<String, String>, key: &str) -> Result<u32, ConfigError>` (missing vs malformed are different variants)
 
-**Run.** `scripts/run.sh S3-T1`
+**Run.** `cargo x run S3-T1`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s03_t01.rs` pass
@@ -70,7 +70,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `process(lines: &[&str], state: &mut BTreeMap<String, u64>) -> Result<usize, TxError>` using `?` throughout
 - `error_chain(e: &dyn Error) -> Vec<String>` that collects every message in the source chain
 
-**Run.** `scripts/run.sh S3-T2` prints a few failing inputs with their full error chains.
+**Run.** `cargo x run S3-T2` prints a few failing inputs with their full error chains.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s03_t02.rs` pass
@@ -110,7 +110,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `exit_code_for(err: &anyhow::Error) -> ExitCode` that downcasts to pick 2 for usage errors, 3 for invalid data, 1 otherwise
 - `checked_index(xs: &[u64], i: usize) -> Result<u64, IndexError>` and a written `PANIC_POLICY` doc comment at the top of the module
 
-**Run.** `scripts/run.sh S3-T3` runs good and bad inputs and prints each exit code.
+**Run.** `cargo x run S3-T3` runs good and bad inputs and prints each exit code.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s03_t03.rs` pass
@@ -145,9 +145,9 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `parse_line(line_no: usize, s: &str) -> Result<Option<Tx>, LineError>` (`None` for blank/comment)
 - `validate(text: &str, genesis: &BTreeMap<String, u64>) -> Report` that collects **all** errors with 1-based line numbers and keeps going after a bad line
 - `Report { valid: Vec<Tx>, errors: Vec<LineError>, final_state: BTreeMap<String, u64> }` with `render() -> String` and `exit_code() -> u8` (0 clean, 3 any invalid line, 2 usage)
-- Runner: `scripts/run.sh S3-T4 -- <path>` uses `anyhow` for file I/O and exits nonzero on failure
+- Runner: `cargo x run S3-T4 -- <path>` uses `anyhow` for file I/O and exits nonzero on failure
 
-**Run.** `scripts/run.sh S3-T4` validates the bundled good and bad samples; `scripts/run.sh S3-T4 -- <path>` validates your own file.
+**Run.** `cargo x run S3-T4` validates the bundled good and bad samples; `cargo x run S3-T4 -- <path>` validates your own file.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s03_t04.rs` pass

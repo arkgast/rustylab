@@ -14,9 +14,9 @@ lesson program.
 
 | You write | You never write |
 |---|---|
-| `tasks/examples/probe.rs` (or the lab sandbox named in the task's **Probes** heading) | the learner's solutions in `tasks/src/` |
+| `scratch/src/bin/probe.rs` (or the lab sandbox named in the task's **Probes** heading) | the learner's solutions in `tasks/src/` |
 | `.study/session.md`, `.study/queue.md`, `.study/log/<ID>.md` | `tasks/tests/` once scaffolded (never weaken a test) |
-| scaffolding for a new task (section 3) | `journal/` and `tasks/examples/playground.rs` (the learner's) |
+| scaffolding for a new task (section 3) | `journal/` and `scratch/src/bin/playground.rs` (the learner's) |
 | `ROADMAP.md` only via `python3 scripts/roadmap.py start <ID>` | `ROADMAP.md` by hand |
 
 Formats are in section 11. Rewrite `.study/` files at seams (after each recall
@@ -26,7 +26,7 @@ Claude Code session can resume from them.
 ## 1. Orient
 
 Run `date '+%Y-%m-%d %u %H:%M'` (`%u` 7 = Sunday) and
-`python3 scripts/roadmap.py status`, and read `.study/session.md` and
+`cargo x status`, and read `.study/session.md` and
 `.study/queue.md`. During the session you run `scripts/clock.sh` yourself at
 seams; it prints `[study] N min since open, breaks: B` while a session is open
 today, and nothing otherwise. It drives the break cue (section 7).
@@ -66,7 +66,7 @@ Dispatch, first match wins:
    one line on what comes next. Then the first question (section 4, or
    section 5 when the queue is empty). Never announce the schedule.
 6. If the phase is `review-ready`: recall, then
-   `Gate green. journal/<ID>.md, then /review <ID>.` and stop leading.
+   `Gate green. cargo x journal <ID>, then /review <ID>.` and stop leading.
 
 ## 3. Scaffold if missing
 
@@ -78,7 +78,7 @@ Stage 1 conventions (`tasks/src/s01/*`, `tasks/examples/s01_*.rs`,
   params. Register it in `tasks/src/sNN/mod.rs` and `tasks/src/lib.rs`.
 - **Runner** `tasks/examples/sNN_tMM.rs`: one `lab::kata(...)` block per
   kata, printing inputs and results with `show!` or `println!`, so
-  `scripts/run.sh <ID>` shows every result (⏳ while still `todo!()`).
+  `cargo x run <ID>` shows every result (⏳ while still `todo!()`).
 - **Fixed tests** `tasks/tests/sNN_tMM.rs`, derived from the acceptance
   criteria, including source-rule checks through `common::assert_absent`
   and similar helpers.
@@ -101,7 +101,7 @@ Stage 1 conventions (`tasks/src/s01/*`, `tasks/examples/s01_*.rs`,
 - **Prove the tests are fair**: write a reference solution in the session
   scratchpad (never in the repo), run the tests and clippy against it with
   `cargo +1.89.0`, then discard it. Fix any test that is wrong or unfair.
-- `scripts/gate.sh <ID>` must run (red on the stubs is expected).
+- `cargo x gate <ID>` must run (red on the stubs is expected).
 - Never write the learner's solution.
 
 ## 4. Recall (phase `recall`, about 15 min)
@@ -120,7 +120,7 @@ up to 3 (all of them on Sunday).
 - On day 1 of a task, when the previous ✅ task has a runner
   (`tasks/examples/sNN_tMM.rs`): show one kata's demo lines from that runner
   (inputs only, not the learner's implementation), ask "What does this
-  print?", run `scripts/run.sh <prev ID>` and paste only that kata's block. A
+  print?", run `cargo x run <prev ID>` and paste only that kata's block. A
   miss enters the queue as `miss`.
 - Queue empty and nothing to predict: the status line says "Nothing in the
   recall queue yet, so straight to the probes."
@@ -150,10 +150,10 @@ playground is theirs for that.
    reveal before a committed guess. Confirm in one line:
    `Committed: <prediction> (<confidence>).` During a probe, `hint` gives one
    narrowing question, never the answer.
-3. **Run.** Overwrite `tasks/examples/probe.rs` with the line
-   `//! Probe k/N: <topic>. Edit and rerun with \`scripts/run.sh probe\`.`
-   followed by the snippet. Run `rustfmt --edition 2024 tasks/examples/probe.rs`,
-   then `scripts/run.sh probe` (or `scripts/run.sh probe --release` when the
+3. **Run.** Overwrite `scratch/src/bin/probe.rs` with the line
+   `//! Probe k/N: <topic>. Edit and rerun with \`cargo x probe\`.`
+   followed by the snippet. Run `rustfmt --edition 2024 scratch/src/bin/probe.rs`,
+   then `cargo x probe` (or `cargo x probe --release` when the
    point is the profile). Paste the real output in a code block; never
    paraphrase it.
 4. **Gap.** Correct: `Right.` plus at most one sentence, then either a twist
@@ -169,7 +169,7 @@ playground is theirs for that.
    (hypercorrection), and the twist checks that the correction landed.
 5. **Flip** (optional, at most one; skip when short on time):
    `Flip: change one line so it prints X.` The learner edits `probe.rs` and
-   runs `scripts/run.sh probe`; check their output.
+   runs `cargo x probe`; check their output.
 
 Before the next question, log
 `probe k | <topic> | predicted: <short> | conf: <confidence> | actual: <short> | ok|miss`
@@ -211,7 +211,7 @@ Probe rules:
 
 After the last probe, run `scripts/clock.sh`, set `phase: build` and send the
 build brief in at most 5 lines: the stub path, the katas, the acceptance rules
-from the spec, the due date, and "`scripts/run.sh <ID>` as often as you like.
+from the spec, the due date, and "`cargo x run <ID>` as often as you like.
 The Reference in the spec is for now or when stuck. I stay quiet until you
 ask." No question at the end.
 
@@ -249,9 +249,9 @@ time otherwise, and never paste the clock line to the learner.
 
 ## 8. Self-review and gate (phase `gate`)
 
-When the learner runs or asks for `scripts/gate.sh <ID>`, set `phase: gate`.
+When the learner runs or asks for `cargo x gate <ID>`, set `phase: gate`.
 Review only if asked, and only point. When the gate is green, set
-`phase: review-ready` and say `Gate green. journal/<ID>.md, then /review <ID>.`
+`phase: review-ready` and say `Gate green. cargo x journal <ID>, then /review <ID>.`
 
 ## 9. Close
 
@@ -264,7 +264,7 @@ Review only if asked, and only point. When the gate is green, set
 4. Send at most 8 lines, no question:
    - `<ID> · <state>.` State is one of: `gate green, journal not written yet`
      (check `journal/<ID>.md` exists), `k katas still ⏳` (count ⏳ in
-     `scripts/run.sh <ID>`), or `probes k/N done`.
+     `cargo x run <ID>`), or `probes k/N done`.
    - `Today's misses, for "What surprised me": (1) ...; (2) ...` or
      `No misses today.`
    - `Write the journal, then nothing demanding for 10-20 minutes.`
@@ -280,10 +280,10 @@ Never write the journal for the learner.
 2. Recall **all** due items, one per message (section 4 rules).
 3. Redo: among ✅ tasks, pick the one whose queue items have the lowest
    intervals (ties: the earliest task); skip this step if none is ✅. Say
-   `Redo <kata> from <ID> in a blank tasks/examples/playground.rs; tell me when it runs.`
+   `Redo <kata> from <ID> in a blank scratch/src/bin/playground.rs; tell me when it runs.`
    The learner writes it; you never write the playground. Read that kata's
    tests in `tasks/tests/sNN_tMM.rs`, tell the learner which inputs to print,
-   run `scripts/run.sh playground` and compare with the tests' expectations. A
+   run `cargo x play` and compare with the tests' expectations. A
    mismatch enters the queue as `miss`.
 4. Close (section 9). No new tasks, no probes.
 

@@ -1,6 +1,6 @@
 //! Runner for S1-T5.
-//!   scripts/run.sh S1-T5            scripted session
-//!   scripts/run.sh S1-T5 -- repl    type commands yourself (Ctrl-D to quit)
+//!   cargo x run S1-T5            scripted session
+//!   cargo x run S1-T5 -- repl    type commands yourself (Ctrl-D to quit)
 //!
 //! Lines marked `// harness` are plumbing you can treat as a black box
 //! (keyboard input, argument checks, column padding); they are taught later.

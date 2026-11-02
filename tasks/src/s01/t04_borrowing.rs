@@ -1,7 +1,7 @@
 //! S1-T4 · Borrowing, slices & strings.
 //!
-//! Replace every `todo!()`. Run `scripts/run.sh S1-T4` to see your results,
-//! `scripts/gate.sh S1-T4` to check them.
+//! Replace every `todo!()`. Run `cargo x run S1-T4` to see your results,
+//! `cargo x gate S1-T4` to check them.
 //!
 //! Rules: no `.clone()`; functions that return `&str` never allocate; nothing
 //! here may panic, whatever the input (watch out for slicing inside a

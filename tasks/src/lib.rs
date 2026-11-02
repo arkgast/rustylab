@@ -2,7 +2,7 @@
 //!
 //! Workflow: `/study` in Claude Code (recall, then probes you predict and
 //! run), replace every `todo!()` in the task file, watch the results with
-//! `scripts/run.sh <ID>`, then make the gate green with `scripts/gate.sh <ID>`.
+//! `cargo x run <ID>`, then make the gate green with `cargo x gate <ID>`.
 //! The tests in `tasks/tests/` are fixed: do not edit them.
 
 pub mod lab;

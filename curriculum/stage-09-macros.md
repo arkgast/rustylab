@@ -22,7 +22,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s09/t01_macro_rules.rs`: `btreemap!{ k => v, ... }` (trailing comma ok), `max!(a, b, c, ...)` with checked comparison, `newtype!(pub AccountId(u64))` generating the struct + `From`/`Display`, `impl_checked_ops!(Balance, u128)` generating `checked_add`/`checked_sub`, and `ensure!(cond, err)` returning `Err(err.into())`.
 
-**Run.** `scripts/run.sh S9-T1`; `cargo expand -p tasks s09::t01_macro_rules` to read the expansion.
+**Run.** `cargo x run S9-T1`; `cargo expand -p tasks s09::t01_macro_rules` to read the expansion.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s09_t01.rs` pass
@@ -54,7 +54,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s09/t02_advanced_macros.rs`: `count!(a b c) == 3` as a `const`; `bitflags_lite!{ struct Perms: u8 { READ = 1, WRITE = 2 } }` generating consts, `contains`, `union`; `state_machine!{ Idle -> Running on Start; Running -> Idle on Stop; }` generating a `State` enum, `Event` enum and `fn next(self, Event) -> Result<State, InvalidTransition>`; `storage_map!` using `$crate` paths only.
 
-**Run.** `scripts/run.sh S9-T2`
+**Run.** `cargo x run S9-T2`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s09_t02.rs` pass

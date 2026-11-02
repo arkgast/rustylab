@@ -13,26 +13,30 @@ Saturday**, with deadlines, review gates and automatic slip tracking.
 
 | File | Role |
 |------|------|
-| `ROADMAP.md` | Status, due dates, scores. **Never edit by hand**; only `scripts/roadmap.py` writes it. |
+| `ROADMAP.md` | Local and gitignored: status, due dates, scores. **Never edit by hand**; only `scripts/roadmap.py` writes it. |
+| `.study/plan.json` | Local and gitignored: start, proposed finish, intensity. Written by `cargo x init`. |
 | `curriculum/stage-NN-*.md` | Task specs: why, probes, reference reading, katas, acceptance criteria, checkpoint questions, stage exam. Headings are parsed by `roadmap.py init`. |
 | `curriculum/README.md` | Phases, learning loop, daily schedule, rubric, blockers, integrity and slip rules. |
 | `curriculum/concepts.md` | Concept ledger: the task that introduces each construct, plus bridges, previews and harness. Every snippet the learner reads obeys it. |
 | `tasks/src/sNN/tMM_*.rs` | The learner's code, one stub file per task. |
-| `tasks/examples/sNN_tMM.rs` | Runner: prints every kata's result (`scripts/run.sh <ID>`). |
-| `tasks/examples/probe.rs` | The tutor's current probe snippet (`scripts/run.sh probe`). Overwritten every probe; always left compiling and clippy-clean. |
+| `tasks/examples/sNN_tMM.rs` | Runner: prints every kata's result (`cargo x run <ID>`). |
+| `scratch/src/bin/probe.rs` | The tutor's current probe snippet (`cargo x probe`). Overwritten every probe; always left compiling and clippy-clean. |
 | `tasks/tests/sNN_tMM.rs` | Fixed gate tests. **Never edit, weaken or skip them.** |
 | `labs/<slug>/` | Separate crates for tasks that need their own deps, target or toolchain (Stage 6 on). |
-| `journal/<ID>.md` | The learner's notes and checkpoint answers (template: `journal/TEMPLATE.md`). |
+| `journal/<ID>.md` | The learner's notes and checkpoint answers, written with `cargo x journal <ID>`. |
+| `scratch/src/bin/playground.rs` | The learner's scratch file. `scratch/` is a gitignored crate outside the workspace, created on first use; add probe dependencies to its `Cargo.toml`. |
 | `.study/` | Tutor state: session cursor, spaced-repetition queue, per-task log. Written only by `/study` and `/review`. |
 
 ## Workflow commands
 
 ```sh
-python3 scripts/roadmap.py status        # what is due next, how late
-scripts/run.sh probe                     # rerun the tutor's current probe (--release for the release profile)
-scripts/run.sh S1-T1                     # run the katas, see results (⏳ = todo!())
-scripts/run.sh playground                # scratch space (tasks/examples/playground.rs)
-scripts/gate.sh S1-T1                    # fmt, clippy, fixed tests, own tests, doctests, runner builds
+cargo x status                           # what is due next, how late
+cargo x probe                     # rerun the tutor's current probe (--release for the release profile)
+cargo x run S1-T1                     # run the katas, see results (⏳ = todo!())
+cargo x play                # scratch space (scratch/src/bin/playground.rs)
+cargo x gate S1-T1                    # fmt, clippy, fixed tests, own tests, doctests, runner builds
+cargo x journal S1-T1                 # guided journal, one section at a time
+cargo x plan                          # local dates and intensity
 python3 scripts/roadmap.py after 3       # the date 3 study days from today (recall queue)
 scripts/clock.sh                         # session clock: "[study] N min since open, breaks: B", or nothing
 ```
@@ -68,7 +72,7 @@ theory. `/study` opens the day; `/review <ID>` closes a task.
 Every concept is taught as a probe: show a runnable snippet (≤12 lines),
 ask one prediction question, wait for a committed answer plus a confidence
 word (`sure`, `think so`, `guess`), write the snippet to
-`tasks/examples/probe.rs`, run it, paste the real output, then explain the
+`scratch/src/bin/probe.rs`, run it, paste the real output, then explain the
 gap in ≤8 lines naming the Rust term. Where the bullet is an idiom, the
 snippet shows the naive and idiomatic versions side by side. End with one
 optional "change one line so it prints X".
@@ -126,7 +130,7 @@ number of study days; `scripts/roadmap.py` does this automatically.
 Stage 1 is fully scaffolded. Later tasks are scaffolded just in time by
 `/study <ID>`, so the tests reflect what has been taught and dependency
 versions are current. To change the plan, edit the stage specs and, only while
-no row has progress, rebuild with `python3 scripts/roadmap.py init <START>`.
+no row has progress, rebuild with `cargo x init <START>`.
 
 The earlier projects (`calculator`, `guessing_game`, `state_machine`) are
 archived on branch `archive/legacy-projects`. Do not restore them; Stage 12
@@ -136,13 +140,14 @@ rebuilds a better runtime from scratch.
 
 | Path | Purpose |
 |------|---------|
-| `tasks/` | Guided exercises: `src/` stubs, `examples/` runners, the probe and the playground, `tests/` fixed gates |
+| `tasks/` | Guided exercises: `src/` stubs, `examples/` runners, `tests/` fixed gates |
 | `tasks/src/lab.rs` | `kata()` and `show!` helpers for runners |
 | `labs/` | Per-task crates created by `/study` (async, macros, wasm, runtime, chains) |
 | `curriculum/`, `ROADMAP.md`, `journal/` | The plan, the tracker, the learner's notes |
 | `.study/` | Tutor state: session cursor, recall queue, per-task logs |
 | `.claude/` | Skills `/study` and `/review` |
-| `scripts/` | `run.sh`, `gate.sh`, `roadmap.py`, `clock.sh` (session clock the tutor runs for the break cue) |
+| `xtask/` | `cargo x`: thin dispatcher to `scripts/` |
+| `scripts/` | `journal.py`, `run.sh`, `gate.sh`, `roadmap.py`, `clock.sh` (session clock the tutor runs for the break cue) |
 | `docs/` | ADRs, audits and write-ups produced during tasks |
 
 ## Commands

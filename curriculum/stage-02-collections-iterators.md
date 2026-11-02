@@ -31,7 +31,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `range_sum(m: &BTreeMap<u64, u64>, from: u64, to: u64) -> u64` (uses `range`)
 - `state_digest(m: &BTreeMap<String, u64>) -> String` (concatenates `key=value;` in key order)
 
-**Run.** `scripts/run.sh S2-T1` prints each kata's result, plus a `HashMap` vs `BTreeMap` iteration order demo over two runs.
+**Run.** `cargo x run S2-T1` prints each kata's result, plus a `HashMap` vs `BTreeMap` iteration order demo over two runs.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s02_t01.rs` pass
@@ -72,7 +72,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `retry<T, E>(attempts: u32, op: impl FnMut() -> Result<T, E>) -> Result<T, E>`
 - `Validator` holding `Vec<Box<dyn Fn(&Tx) -> bool>>` with `add_rule` and `check(&self, tx: &Tx) -> bool`
 
-**Run.** `scripts/run.sh S2-T2`
+**Run.** `cargo x run S2-T2`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s02_t02.rs` pass
@@ -108,7 +108,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - Day 2: `max_rise(prices: &[u64]) -> Option<u64>` (windows), `batch_sums` (chunks), `reverse_words` (rev, join), `merge_digits` (peekable: group adjacent digits into numbers), `run_lengths(&str) -> Vec<(char, usize)>` (group-by via fold), `parse_strict(&[&str]) -> Result<Vec<i64>, ParseIntError>` (collect into `Result`), `letter_index(&str) -> HashMap<char, Vec<usize>>` (fold into a map), `richest(&[(&str, u64)]) -> Option<&str>` (max_by_key), `shortest_word` (min_by_key), `closest_to(target: i64, xs: &[i64])` (min_by with ties)
 - Spaced repetition: `count_words_iter` and `largest_iter` from S1-T4 rewritten as pipelines
 
-**Run.** `scripts/run.sh S2-T3` prints each kata's loop and iterator result next to each other.
+**Run.** `cargo x run S2-T3` prints each kata's loop and iterator result next to each other.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s02_t03.rs` pass
@@ -148,7 +148,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 - `collatz(n: u64) -> impl Iterator<Item = u64>` via `successors`
 - `BlockHeights { start, step, end }` that implements `ExactSizeIterator` correctly
 
-**Run.** `scripts/run.sh S2-T4`
+**Run.** `cargo x run S2-T4`
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s02_t04.rs` pass
@@ -179,7 +179,7 @@ Each task: `/study` (recall, then probes: predict, run, explain the gap), solve 
 
 **Build.** `tasks/src/s02/t05_analytics.rs`: `Tx { block: u64, from: String, to: String, amount: u64 }`, `parse_txs(&str) -> Result<Vec<Tx>, ParseError>` (format: `block,from,to,amount`), and an `Analytics` set: `volume_per_block`, `top_senders(n)`, `net_flows -> BTreeMap<String, i128>`, `largest_tx`, `accounts_seen -> BTreeSet<String>`, `blocks_with_volume_over(threshold)`, `report() -> String`.
 
-**Run.** `scripts/run.sh S2-T5` analyzes the bundled sample; `scripts/run.sh S2-T5 -- <path>` analyzes your own file.
+**Run.** `cargo x run S2-T5` analyzes the bundled sample; `cargo x run S2-T5 -- <path>` analyzes your own file.
 
 **Acceptance criteria** (all required)
 - [ ] All tests in `tasks/tests/s02_t05.rs` pass

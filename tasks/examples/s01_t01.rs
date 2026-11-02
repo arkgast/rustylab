@@ -1,4 +1,4 @@
-//! Runner for S1-T1: `scripts/run.sh S1-T1`. Add your own `show!` lines freely.
+//! Runner for S1-T1: `cargo x run S1-T1`. Add your own `show!` lines freely.
 use tasks::s01::t01_basics::*;
 use tasks::{lab::kata, show};
 
