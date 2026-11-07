@@ -25,7 +25,7 @@ Saturday**, with deadlines, review gates and automatic slip tracking.
 | `labs/<slug>/` | Separate crates for tasks that need their own deps, target or toolchain (Stage 6 on). |
 | `journal/<ID>.md` | The learner's notes and checkpoint answers, written with `cargo x journal <ID>`. |
 | `scratch/src/bin/playground.rs` | The learner's scratch file. `scratch/` is a gitignored crate outside the workspace, created on first use; add probe dependencies to its `Cargo.toml`. |
-| `.study/` | Tutor state: session cursor, spaced-repetition queue, per-task log. Written only by `/study` and `/review`. |
+| `.study/` | Local and gitignored: tutor state (session cursor, spaced-repetition queue, per-task log). Created by `cargo x init`, then written only by `/study` and `/review`. |
 
 ## Workflow commands
 

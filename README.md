@@ -41,11 +41,17 @@ Needs Rust 1.89 and Python 3. Dates and progress are personal, so they are not
 in git. Create them once, with your start date:
 
 ```sh
-cargo x init 2026-11-02    # writes ROADMAP.md and .study/plan.json
+cargo x init 2026-11-02    # writes ROADMAP.md and .study/ (plan, session, queue)
 cargo x plan               # start, proposed finish, hours per day, intensity
 ```
 
-Move to a new machine by copying those two files: they exist nowhere else. The
+To change the start date, run `cargo x init <new date>` again. Once any row has
+left ⬜ todo, `init` refuses; `cargo x init --force <new date>` rebuilds anyway
+and discards every status, done date and score, so use it only before real
+progress.
+
+Move to a new machine by copying `ROADMAP.md` and the whole `.study/` folder
+(plan, session cursor, recall queue, tutor logs): they exist nowhere else. The
 schedule always assumes 3 hours Monday to Saturday; the plan records that but
 changing it there does not reschedule anything.
 

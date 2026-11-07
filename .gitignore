@@ -4,4 +4,4 @@ __pycache__/
 # Personal and local: experiments, dates and progress stay out of the repo.
 /scratch/
 ROADMAP.md
-.study/plan.json
+/.study/

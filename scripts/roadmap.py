@@ -2,7 +2,7 @@
 """Update ROADMAP.md deterministically.
 
 Usage:
-  scripts/roadmap.py init   [START-DATE]    # (re)build ROADMAP.md and .study/plan.json from curriculum/stage-*.md
+  scripts/roadmap.py init   [--force] [START-DATE]  # (re)build ROADMAP.md and .study/plan.json from curriculum/stage-*.md
   scripts/roadmap.py plan                   # show the local plan: dates and intensity
   scripts/roadmap.py status                 # progress + what is due next
   scripts/roadmap.py start  <ID>            # mark 🔨 doing
@@ -15,6 +15,8 @@ Options (before the command): --today YYYY-MM-DD   (for testing), --file PATH
 
 ROADMAP.md and .study/plan.json are personal and gitignored, so no dates live in
 the repo. Without a START-DATE, init reuses the plan's start, else today.
+init refuses once any row has progress; --force rebuilds anyway and discards
+every status, done date and score.
 
 Study days are Monday..Saturday. Finishing late (or failing a review) shifts the
 due date of every later unfinished row by the same number of study days.
@@ -171,17 +173,41 @@ def read_plan(path):
     return json.loads(f.read_text()) if f.exists() else None
 
 
+SESSION_TEMPLATE = """\
+task: none
+day: 0 of 0
+phase: recall          # recall | lesson | build | gate | review-ready
+probe: 0/0             # probes done / planned for this task
+opened: none           # YYYY-MM-DDTHH:MM of today's open, or none
+closed: none           # HH:MM once /study close ran today, or none
+breaks: 0
+hints: 0               # highest hint rung used today
+"""
+
+
+def ensure_study_state(path):
+    """Create the tutor's state files on a fresh clone; existing ones are kept.
+
+    They hold dates, so like the plan they live only on this machine."""
+    study = path.parent / ".study"
+    (study / "log").mkdir(parents=True, exist_ok=True)
+    for name, text in (("session.md", SESSION_TEMPLATE),
+                       ("queue.md", "# due | source | kind | interval | prompt\n")):
+        if not (study / name).exists():
+            (study / name).write_text(text)
+
+
 def write_plan(path, start, finish, days):
     plan = dict(start=start.isoformat(), proposed_finish=finish.isoformat(), study_days_planned=days,
                 hours_per_day=3, study_week="Monday-Saturday", intensity="as planned")
     plan_path(path).write_text(json.dumps(plan, indent=2) + "\n")
 
 
-def init(path, start):
-    if path.exists():
+def init(path, start, force=False):
+    if path.exists() and not force:
         _, rows = parse(path)
         if any(r["status"] != TODO for r in rows.values()):
-            sys.exit("ROADMAP.md has progress; refusing to rebuild it")
+            sys.exit("ROADMAP.md has progress; refusing to rebuild it (--force discards it)")
     while not is_study_day(start):
         start += dt.timedelta(days=1)
     out, day, total, phase = [HEADER], start, 0, None
@@ -210,6 +236,7 @@ def init(path, start):
     path.write_text(text)
     lines, rows = parse(path)
     save(path, lines, rows, 0)
+    ensure_study_state(path)
     write_plan(path, start, max(r["due"] for r in rows.values()), total)
     print(f"ROADMAP.md rebuilt: {len(rows)} rows, {total} study days, "
           f"{start.isoformat()} → {max(r['due'] for r in rows.values()).isoformat()}")
@@ -243,9 +270,11 @@ def main(argv):
         sys.exit(__doc__)
     cmd, args = argv[0], argv[1:]
     if cmd == "init":
+        force = "--force" in args
+        args = [a for a in args if a != "--force"]
         plan = read_plan(path)
         start = args[0] if args else plan["start"] if plan else today.isoformat()
-        init(path, dt.date.fromisoformat(start))
+        init(path, dt.date.fromisoformat(start), force)
         return
     if cmd == "plan":
         plan = read_plan(path)

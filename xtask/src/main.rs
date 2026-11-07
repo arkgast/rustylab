@@ -9,6 +9,7 @@ RustyLab commands
   cargo x status                what is due next, how late
   cargo x plan                  your dates and intensity (.study/plan.json)
   cargo x init [YYYY-MM-DD]     build ROADMAP.md and the plan (before any progress)
+  cargo x init --force [DATE]   rebuild anyway, discarding all statuses and scores
   cargo x probe [--release]     rerun the tutor's snippet
   cargo x play [--release]      run your playground
   cargo x run S1-T1 [-- args]   run your katas (cargo x S1-T1 also works)
