@@ -13,8 +13,8 @@ Saturday**, with deadlines, review gates and automatic slip tracking.
 
 | File | Role |
 |------|------|
-| `ROADMAP.md` | Local and gitignored: status, due dates, scores. **Never edit by hand**; only `scripts/roadmap.py` writes it. |
-| `.study/plan.json` | Local and gitignored: start, proposed finish, intensity. Written by `cargo x init`. |
+| `ROADMAP.md` | Local and gitignored: status, due dates, scores. **Never edit by hand**; only `scripts/roadmap.py` writes it (`init`, `start`, `pass`, `fail`). |
+| `.study/plan.json` | Local and gitignored: start, proposed finish, intensity. Written only by `cargo x init`; editing it reschedules nothing. |
 | `curriculum/stage-NN-*.md` | Task specs: why, probes, reference reading, katas, acceptance criteria, checkpoint questions, stage exam. Headings are parsed by `roadmap.py init`. |
 | `curriculum/README.md` | Phases, learning loop, daily schedule, rubric, blockers, integrity and slip rules. |
 | `curriculum/concepts.md` | Concept ledger: the task that introduces each construct, plus bridges, previews and harness. Every snippet the learner reads obeys it. |
@@ -25,7 +25,7 @@ Saturday**, with deadlines, review gates and automatic slip tracking.
 | `labs/<slug>/` | Separate crates for tasks that need their own deps, target or toolchain (Stage 6 on). |
 | `journal/<ID>.md` | The learner's notes and checkpoint answers, written with `cargo x journal <ID>`. |
 | `scratch/src/bin/playground.rs` | The learner's scratch file. `scratch/` is a gitignored crate outside the workspace, created on first use; add probe dependencies to its `Cargo.toml`. |
-| `.study/` | Local and gitignored: tutor state (session cursor, spaced-repetition queue, per-task log). Created by `cargo x init`, then written only by `/study` and `/review`. |
+| `.study/` | Local and gitignored: tutor state (session cursor, spaced-repetition queue, per-task log). `cargo x init` creates the files when missing and never overwrites them; after that only `/study` and `/review` write them. |
 
 ## Workflow commands
 
@@ -37,6 +37,7 @@ cargo x play                # scratch space (scratch/src/bin/playground.rs)
 cargo x gate S1-T1                    # fmt, clippy, fixed tests, own tests, doctests, runner builds
 cargo x journal S1-T1                 # guided journal, one section at a time
 cargo x plan                          # local dates and intensity
+cargo x init [--force] [YYYY-MM-DD]   # schedule ROADMAP.md and the plan (see "Plan and dates")
 python3 scripts/roadmap.py after 3       # the date 3 study days from today (recall queue)
 scripts/clock.sh                         # session clock: "[study] N min since open, breaks: B", or nothing
 ```
@@ -129,8 +130,25 @@ number of study days; `scripts/roadmap.py` does this automatically.
 
 Stage 1 is fully scaffolded. Later tasks are scaffolded just in time by
 `/study <ID>`, so the tests reflect what has been taught and dependency
-versions are current. To change the plan, edit the stage specs and, only while
-no row has progress, rebuild with `cargo x init <START>`.
+versions are current.
+
+## Plan and dates
+
+No dates live in git: `ROADMAP.md` and `.study/` are gitignored. `cargo x init
+<START>` schedules every task from the stage specs on study days (Mon-Sat; a
+Sunday start moves to Monday), replaces `ROADMAP.md` and `.study/plan.json`,
+and creates `.study/session.md`, `.study/queue.md` and `.study/log/` only if
+missing. Without a date it reuses the plan's start, else today.
+
+- To change the start date or the plan (after editing the stage specs), rerun
+  `cargo x init <START>`. It refuses once any row is not ⬜.
+- `cargo x init --force <START>` rebuilds anyway and discards every status,
+  done date, score and the slip count; tutor state, journals and code stay.
+  It is for re-planning before real progress, never a way to erase slip.
+  Run it only when the learner asks; it cannot be undone.
+- If `cargo x status` prints `no ROADMAP.md yet`, the learner runs
+  `cargo x init <START>` first; `/study` does not run it for them.
+- Full steps for the learner: the Setup section of `README.md`.
 
 The earlier projects (`calculator`, `guessing_game`, `state_machine`) are
 archived on branch `archive/legacy-projects`. Do not restore them; Stage 12
@@ -144,7 +162,7 @@ rebuilds a better runtime from scratch.
 | `tasks/src/lab.rs` | `kata()` and `show!` helpers for runners |
 | `labs/` | Per-task crates created by `/study` (async, macros, wasm, runtime, chains) |
 | `curriculum/`, `ROADMAP.md`, `journal/` | The plan, the tracker, the learner's notes |
-| `.study/` | Tutor state: session cursor, recall queue, per-task logs |
+| `.study/` | Local, gitignored tutor state: plan, session cursor, recall queue, per-task logs |
 | `.claude/` | Skills `/study` and `/review` |
 | `xtask/` | `cargo x`: thin dispatcher to `scripts/` |
 | `scripts/` | `journal.py`, `run.sh`, `gate.sh`, `roadmap.py`, `clock.sh` (session clock the tutor runs for the break cue) |

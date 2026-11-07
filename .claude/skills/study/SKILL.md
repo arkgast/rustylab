@@ -27,7 +27,9 @@ Claude Code session can resume from them.
 
 Run `date '+%Y-%m-%d %u %H:%M'` (`%u` 7 = Sunday) and
 `cargo x status`, and read `.study/session.md` and
-`.study/queue.md`. During the session you run `scripts/clock.sh` yourself at
+`.study/queue.md`. If `cargo x status` reports no `ROADMAP.md`, say
+`No plan yet. Run cargo x init <start date> (see README Setup), then /study.`
+and stop; never run `init` yourself. During the session you run `scripts/clock.sh` yourself at
 seams; it prints `[study] N min since open, breaks: B` while a session is open
 today, and nothing otherwise. It drives the break cue (section 7).
 

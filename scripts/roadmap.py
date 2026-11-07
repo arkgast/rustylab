@@ -16,7 +16,9 @@ Options (before the command): --today YYYY-MM-DD   (for testing), --file PATH
 ROADMAP.md and .study/plan.json are personal and gitignored, so no dates live in
 the repo. Without a START-DATE, init reuses the plan's start, else today.
 init refuses once any row has progress; --force rebuilds anyway and discards
-every status, done date and score.
+every status, done date, score and the slip count. init also creates
+.study/session.md, .study/queue.md and .study/log/ when missing, never
+overwriting them.
 
 Study days are Monday..Saturday. Finishing late (or failing a review) shifts the
 due date of every later unfinished row by the same number of study days.

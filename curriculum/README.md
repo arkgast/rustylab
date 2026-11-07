@@ -139,6 +139,9 @@ A task flips to ✅ only through `/review <ID>`, in this order:
 - A late finish or a failed review shifts every later unfinished row by the
   same number of study days (`scripts/roadmap.py` does this).
 - Three late tasks in a row: drop stretch goals, never the 3 hours or the gate.
+- Re-planning: `cargo x init --force <date>` rebuilds the schedule but wipes
+  every status and score. It is for changing the start date before real
+  progress, not for erasing slip.
 - Stretch goals are optional and never affect the score.
 
 ## Scaffolding

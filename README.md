@@ -37,23 +37,54 @@ answers.
 
 ## Setup
 
-Needs Rust 1.89 and Python 3. Dates and progress are personal, so they are not
-in git. Create them once, with your start date:
+Needs Rust 1.89 and Python 3. Dates and progress are personal, so none of them
+are in git: `ROADMAP.md` and `.study/` are gitignored and exist only on your
+machine. Create them once, with your start date:
 
 ```sh
-cargo x init 2026-11-02    # writes ROADMAP.md and .study/ (plan, session, queue)
+cargo x init 2026-11-09    # schedule the course from this date
 cargo x plan               # start, proposed finish, hours per day, intensity
+cargo x status             # what is due next
 ```
 
-To change the start date, run `cargo x init <new date>` again. Once any row has
-left ⬜ todo, `init` refuses; `cargo x init --force <new date>` rebuilds anyway
-and discards every status, done date and score, so use it only before real
-progress.
+### What `cargo x init` does
 
-Move to a new machine by copying `ROADMAP.md` and the whole `.study/` folder
-(plan, session cursor, recall queue, tutor logs): they exist nowhere else. The
-schedule always assumes 3 hours Monday to Saturday; the plan records that but
-changing it there does not reschedule anything.
+`cargo x init [--force] [YYYY-MM-DD]` reads the task headings and day counts
+in `curriculum/stage-*.md` and schedules every task on study days (Monday to
+Saturday, 3 hours each) from the start date. A Sunday start moves to Monday.
+It writes:
+
+| File | Contents | On a rebuild |
+|------|----------|--------------|
+| `ROADMAP.md` | every row ⬜ todo with its due date, the progress block | replaced |
+| `.study/plan.json` | start, proposed finish, study days, intensity | replaced |
+| `.study/session.md`, `.study/queue.md`, `.study/log/` | blank tutor state | created only if missing, never overwritten |
+
+Without a date it reuses the start in `.study/plan.json`, or today if there is
+no plan yet. Your journals, code and tutor state are never touched.
+
+### Changing the start date
+
+- **Nothing started yet** (every row ⬜): `cargo x init <new date>`.
+- **A row has progress** (🔨, ✅ or 🔁): `init` refuses with
+  `ROADMAP.md has progress; refusing to rebuild it`. `cargo x init --force
+  <new date>` rebuilds anyway and **discards every status, done date, score
+  and the slip count**. Use it only before real progress, for example when
+  `/study` marked the first task 🔨 but you want to start on another day.
+  After it, `/study` marks the current task started again.
+- **Real progress and you are behind**: do not rebuild. Late finishes already
+  shift every later row (see the slip policy in
+  [`curriculum/README.md`](curriculum/README.md)).
+
+The same rules apply after editing the stage specs (adding a task, changing
+its days): rebuild with `init` while nothing has started.
+
+### Moving to another machine
+
+Copy `ROADMAP.md` and the whole `.study/` folder (plan, session cursor, recall
+queue, tutor logs): they exist nowhere else. The schedule always assumes 3
+hours Monday to Saturday; `plan.json` records that, but changing it there does
+not reschedule anything.
 
 ## Commands
 
@@ -101,14 +132,14 @@ Full rules, rubric and integrity policy: [`curriculum/README.md`](curriculum/REA
 
 | Path | What it is |
 |------|------------|
-| `ROADMAP.md` | Local, gitignored tracker: status, due dates, scores (updated only by reviews) |
+| `ROADMAP.md` | Local, gitignored tracker: status, due dates, scores (written only by `scripts/roadmap.py`: `init`, `/study`, `/review`) |
 | `scratch/` | Local, gitignored crate: the tutor's probe and your playground |
 | `xtask/` | The `cargo x` command |
 | `curriculum/` | Stage specs and the rules of the game |
 | `tasks/` | Your exercises (`src/`), runners (`examples/`), fixed gate tests (`tests/`) |
 | `labs/` | Separate crates for later stages (async, macros, WASM, runtime, chains) |
 | `journal/` | Your notes and checkpoint answers per task |
-| `.study/` | Tutor state: today's session, the recall queue, per-task logs (written by `/study` and `/review`) |
+| `.study/` | Local, gitignored: your plan, today's session, the recall queue, per-task logs (created by `cargo x init`, then written by `/study` and `/review`) |
 | `scripts/` | `run.sh`, `gate.sh`, `roadmap.py`, `clock.sh` (session clock the tutor checks for the break cue) |
 | `docs/` | ADRs, audits and write-ups you produce along the way |
 
